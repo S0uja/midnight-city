@@ -462,7 +462,7 @@ def execute_one_minute(cid,plan):
     else:
      s['remaining']=1; s['duration']=1; s['text']=f'{other["name"]} declined {inter["type"].replace("_"," ")}'
    if inter['accepted']:
-    if inter['type']=='date':
+    if inter['type']=='date' and not inter.get('player_initiated'):
      # Joint date: both NPCs receive the same destination and one shared social lock.
      destination=plan.get('target_location') or choose_date_destination(c.get('location'))
      existing_target=STATE['goals'].get(oid)
@@ -493,9 +493,10 @@ def execute_one_minute(cid,plan):
      return
     set_lock(STATE,cid,oid,inter['type'],STATE['sim_minutes']+INTERACTIONS.get(inter['type'],{}).get('minutes',10))
     meta=INTERACTIONS.get(inter['type'],{})
-    update_relationship(cid,oid,friendship=meta.get('friendship',0),trust=meta.get('trust',0),attraction=meta.get('attraction',0),annoyance=meta.get('annoyance',0),respect=meta.get('respect',0),reason=f'{inter["type"].replace("_"," ").capitalize()} with {other["name"]}.')
-    update_relationship(oid,cid,friendship=meta.get('friendship',0)*.75,trust=meta.get('trust',0)*.75,attraction=meta.get('attraction',0)*.75,annoyance=meta.get('annoyance',0)*.75,respect=meta.get('respect',0)*.75,reason=f'{inter["type"].replace("_"," ").capitalize()} with {c["name"]}.')
-    remember(cid,f'{inter["type"].replace("_"," ").capitalize()} with {other["name"]}.','episodic',.8); remember(oid,f'{inter["type"].replace("_"," ").capitalize()} with {c["name"]}.','episodic',.75)
+    if not inter.get('player_initiated'):
+     update_relationship(cid,oid,friendship=meta.get('friendship',0),trust=meta.get('trust',0),attraction=meta.get('attraction',0),annoyance=meta.get('annoyance',0),respect=meta.get('respect',0),reason=f'{inter["type"].replace("_"," ").capitalize()} with {other["name"]}.')
+     update_relationship(oid,cid,friendship=meta.get('friendship',0)*.75,trust=meta.get('trust',0)*.75,attraction=meta.get('attraction',0)*.75,annoyance=meta.get('annoyance',0)*.75,respect=meta.get('respect',0)*.75,reason=f'{inter["type"].replace("_"," ").capitalize()} with {c["name"]}.')
+     remember(cid,f'{inter["type"].replace("_"," ").capitalize()} with {other["name"]}.','episodic',.8); remember(oid,f'{inter["type"].replace("_"," ").capitalize()} with {c["name"]}.','episodic',.75)
     c['recent_interaction_types']=[inter['type']]+(c.get('recent_interaction_types') or [])[:4]; other['recent_interaction_types']=[inter['type']]+(other.get('recent_interaction_types') or [])[:4]
     # Persist real social history. This is also the source used by the cooldown system;
     # without it, repeated proposals could immediately return after every interaction.
