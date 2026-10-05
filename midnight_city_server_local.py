@@ -26,7 +26,7 @@ HOT_RELOAD_MTIMES=globals().get('HOT_RELOAD_MTIMES',{})
 HTTP_SERVER=globals().get('HTTP_SERVER',None)
 MODEL=Path(os.environ.get('MIDNIGHT_BRAIN_MODEL',r'C:\AI\MidnightBrain_v2_MapAgnostic\models\Qwen3-4B-Nymphaea-RP'))
 ADAPTER=Path(os.environ.get('MIDNIGHT_BRAIN_ADAPTER',r'C:\AI\MidnightBrain_v2_MapAgnostic\output\MidnightBrain-v3\adapter'))
-VERSION='V32.2_MAP_EXPANSION'; MAX_NEW=int(os.environ.get('MIDNIGHT_BRAIN_MAX_NEW_TOKENS','48'))
+VERSION='V32.2_MAP_EXPANSION'; MAX_NEW=int(os.environ.get('MIDNIGHT_BRAIN_MAX_NEW_TOKENS','256'))
 LOCK=threading.RLock(); BRAIN_LOCK=threading.Lock(); MODEL_OBJ=None; TOKENIZER=None; BRAIN_ERROR=None; BRAIN_EPOCH=0
 BRAIN_ACTIVE=set(); BRAIN_PENDING={}; BRAIN_DISPATCHING=False
 DIALOGUE_LOCK=threading.RLock(); DIALOGUE_JOBS={}; DIALOGUE_SEQ=0
