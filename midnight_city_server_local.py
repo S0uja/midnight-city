@@ -1651,8 +1651,6 @@ def main():
   while True: time.sleep(1)
  except KeyboardInterrupt: s.shutdown(); s.server_close()
 if __name__=='__main__' and not HOT_RELOAD_ACTIVE: main()
-,'',reply,flags=re.I).strip().strip('"')
-  if reply and len(reply)<=700 and not too_similar(reply,previous): return reply
  except Exception as e:
   log_event('dialogue_brain_fallback',character_id=cid,target_id=oid,error=str(e),sim_minutes=now)
  return dialogue_fallback(c,o,text,now)
