@@ -62,9 +62,6 @@ def available_interactions(actor, target, hour: float):
     for kind, meta in INTERACTIONS.items():
         if f < meta.get("min_friendship", 0):
             continue
-        family_role = str(r.get("family_role") or "").strip().lower()
-        if family_role and kind in {"flirt", "romantic_conversation", "date", "hug", "kiss", "intimacy"}:
-            continue
         if kind in ROMANTIC_KINDS and not meets_romantic(kind, f, trust, attraction):
             continue
         if kind == "move_in_together" and actor.get("home") == target.get("home"):
