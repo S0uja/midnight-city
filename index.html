@@ -234,7 +234,7 @@ function renderNpcLayer(chars){
 }
 function showInteraction(targetId=selectedTargetId){ selectedTargetId=targetId||selectedTargetId||'sonya'; interactionOpen=true; setTemporaryOneX(); const c=state.characters?.[selectedTargetId]||{}; const title=$('interactionTitle'); if(title)title.textContent='💬 '+(c.name||'Персонаж'); const ov=$('interactionOverlay'); if(ov)ov.style.display='flex'; const pr=$('proximity'); if(pr)pr.style.display='none'; }
 function render(d){
- Object.assign(state,d); if(d.player_position) playerPos={x:Number(d.player_position.x||16),y:Number(d.player_position.y||25)}; const chars=d.characters||{}; const k=chars.kirill||{}; const targetId=d.selected_target_id||selectedTargetId||'sonya'; const target=chars[targetId]||chars.sonya||{}; const abs=d.sim_minutes%1440;
+ Object.assign(state,d); if(d.player_position && playerMovePending===0) playerPos={x:Number(d.player_position.x||16),y:Number(d.player_position.y||25)}; const chars=d.characters||{}; const k=chars.kirill||{}; const targetId=d.selected_target_id||selectedTargetId||'sonya'; const target=chars[targetId]||chars.sonya||{}; const abs=d.sim_minutes%1440;
  $('day').textContent=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][(d.day-1)%7]||'Friday'; $('dateLabel').textContent='Day '+d.day; $('clock').textContent=fmt(abs);
  $('locLabel').textContent=(target.location||'—')+' · '+(d.current_location_type||'—');
  renderNpcLayer(chars); const pp=d.player_position||locPos(k.location); const [kx,ky]=[Number(pp.x||16),Number(pp.y||25)]; $('npcKirill').style.left=kx+'%';$('npcKirill').style.top=ky+'%';$('npcKirillTag').textContent='Kirill · '+(k.location||'');
@@ -323,14 +323,28 @@ $('smartPenBtn')?.addEventListener('click',async()=>{
 $('smartPen')?.addEventListener('keydown',e=>{if(e.key==='Enter')$('smartPenBtn')?.click();});
 
 // Player mode: Kirill is directly controlled; all NPCs remain autonomous.
-let playerPos={x:16,y:25}; let interactionOpen=false; let dialogueOpen=false; let modalSession=false; let savedModalSpeed=null; let dialogueViewHistory=[]; let dialoguePollTimer=null;
+let playerPos={x:16,y:25}; let playerMovePending=0; let interactionOpen=false; let dialogueOpen=false; let modalSession=false; let savedModalSpeed=null; let dialogueViewHistory=[]; let dialoguePollTimer=null;
 
 function rememberModalSpeed(){ if(!modalSession){ savedModalSpeed={ai:!!state.ai_mode,speed:Math.max(1,Math.min(16,Number(state.speed||1)))}; modalSession=true; } }
 function setTemporaryOneX(){ rememberModalSpeed(); selectModeButton(document.querySelector('#speeds button[data-speed="1"]')); $('speedText').textContent='1×'; $('aiModeLabel').textContent='Live simulation'; fetch('/api/speed',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({speed:1})}).catch(()=>{}); }
 function restoreModalSpeed(){ if(!modalSession)return; const saved=savedModalSpeed; modalSession=false; savedModalSpeed=null; if(saved?.ai){ selectModeButton(document.querySelector('#speeds button[data-ai="1"]')); $('speedText').textContent='AI'; $('aiModeLabel').textContent='Event-driven AI'; fetch('/api/speed',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'ai'})}).catch(()=>{}); } else { const v=saved?.speed||1; selectModeButton(document.querySelector('#speeds button[data-speed="'+v+'"]')||document.querySelector('#speeds button[data-speed="1"]')); $('speedText').textContent=v+'×'; $('aiModeLabel').textContent='Live simulation'; fetch('/api/speed',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({speed:v})}).catch(()=>{}); } }
 function showInteraction(){ if(interactionOpen)return; interactionOpen=true; setTemporaryOneX(); const ov=$('interactionOverlay'); if(ov)ov.style.display='flex'; const pr=$('proximity'); if(pr)pr.style.display='none'; }
 function hideInteraction(restore=true){ interactionOpen=false; const ov=$('interactionOverlay');if(ov)ov.style.display='none'; if(restore && !dialogueOpen)restoreModalSpeed(); }
-async function movePlayer(dx,dy){ if(interactionOpen||dialogueOpen)return; playerPos.x=Math.max(2,Math.min(98,playerPos.x+dx)); playerPos.y=Math.max(5,Math.min(94,playerPos.y+dy)); fetch('/api/player-move',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({x:playerPos.x,y:playerPos.y})}).catch(()=>{}); const pr=$('proximity'); if(pr)pr.style.display=playerDistance()<=12?'block':'none'; }
+async function movePlayer(dx,dy){
+ if(interactionOpen||dialogueOpen)return;
+ playerPos.x=Math.max(2,Math.min(98,playerPos.x+dx));
+ playerPos.y=Math.max(5,Math.min(94,playerPos.y+dy));
+ const visual=$('npcKirill');
+ if(visual){ visual.style.left=playerPos.x+'%'; visual.style.top=playerPos.y+'%'; }
+ playerMovePending++;
+ const requestPos={x:playerPos.x,y:playerPos.y};
+ try{
+  await fetch('/api/player-move',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(requestPos)});
+ }catch(e){}finally{
+  playerMovePending=Math.max(0,playerMovePending-1);
+ }
+ const pr=$('proximity'); if(pr)pr.style.display=playerDistance()<=12?'block':'none';
+}
 document.addEventListener('keydown',e=>{ if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))return; if(interactionOpen||dialogueOpen){if(e.key==='Escape'){if(dialogueOpen)hideDialogue();else hideInteraction();}return;} const k=e.key.toLowerCase(); let dx=0,dy=0;if(k==='w'||e.key==='ArrowUp')dy=-2;if(k==='s'||e.key==='ArrowDown')dy=2;if(k==='a'||e.key==='ArrowLeft')dx=-2;if(k==='d'||e.key==='ArrowRight')dx=2;if(dx||dy){e.preventDefault();movePlayer(dx,dy);} });
 
 function renderDialogueHistory(history){const box=$('dialogueHistory');if(!box)return;box.innerHTML=(history||[]).slice(-20).map(m=>'<div style="margin:5px 0;padding:7px 9px;border-radius:9px;background:'+(m.speaker==='Kirill'?'#18152a':'#151b23')+';text-align:'+(m.speaker==='Kirill'?'right':'left')+'"><b style="font-size:9px;color:#9da8b7">'+escapeHtml(m.speaker)+'</b><div style="font-size:11px;margin-top:2px">'+escapeHtml(m.text)+'</div></div>').join('');box.scrollTop=box.scrollHeight;}
