@@ -1079,7 +1079,7 @@ def smart_profile(cid):
   c=STATE['characters'].get(cid)
   if not c: return None
   return {'character_id':cid,'name':c['name'],'inner_thoughts':copy.deepcopy(c.get('inner_thoughts',[])[-12:]),
-          'diary':copy.deepcopy(c.get('diary',[])[-7:]),'smart_schedule':copy.deepcopy(c.get('smart_schedule',[])),
+          'diary':copy.deepcopy(c.get('diary',[])[-7:]),'smart_schedule':copy.deepcopy(c.get('smart_schedule',[])),'day_plan':copy.deepcopy(STATE.get('day_plans',{}).get(cid,[])),
           'episodic_memory':copy.deepcopy(c.get('episodic_memory',[])[-12:]),'memory_items':copy.deepcopy(c.get('memory_items',[])[-12:]),'relationships':copy.deepcopy(c.get('relationships',{})),'personality':copy.deepcopy(c.get('personality',{}))}
 
 def apply_player_pen(text, character_id=None):
@@ -1341,8 +1341,36 @@ def player_interaction(payload):
     accepted=min(accepted,.20)
   ok=accepted>=.45
   if ok:
-   meta=INTERACTIONS.get(engine_type,{})
-   update_relationship(
+   # Player actions interrupt the NPC's current autonomous goal. The
+   # remaining day plan stays queued and resumes after this interaction.
+   old_goal=STATE['goals'].get(oid)
+   if old_goal:
+    STATE['action_history'].append({'start':old_goal.get('start',now),'end':now,
+      'action':old_goal.get('goal','goal'),'action_text':old_goal.get('label',''),
+      'from_location':o.get('location'),'location':o.get('location'),'destination':old_goal.get('target_location'),
+      'kind':'goal_interrupted','character_id':oid,'character_name':o['name'],
+      'brain_goal':old_goal.get('goal',''),'journal_status':'INTERRUPTED','request_seq':old_goal.get('brain_request_seq')})
+   duration=INTERACTIONS.get(engine_type,{}).get('minutes',10)
+   forced_steps=[step('social_interaction',duration,f'{labels[it]} с {c["name"]}')]
+   forced_plan={'id':f'{oid}-player-{int(time.time()*1000)}','goal':'socialize',
+     'label':f'{labels[it]} с {c["name"]}','action_text':forced_steps[0]['text'],
+     'brain_intention':'player_interaction','action':'social_interaction','start':now,
+     'end':now+duration,'duration_minutes':duration,'step_index':0,'steps':forced_steps,
+     'target_location':o.get('location'),'interaction':{'target_id':cid,'type':engine_type,
+     'resolved':True,'accepted':True,'primary':True,'player_initiated':True},
+     'source':'player_interrupt','brain_request_seq':STATE.get('brain_request_seq',0),
+     'started':False,'status':'active'}
+   STATE['goals'][oid]=forced_plan
+   o['action']=forced_plan['label']
+   STATE['action_history'].append({'start':now,'end':now+duration,'action':'social_interaction',
+     'action_text':forced_plan['label'],'from_location':o.get('location'),'location':o.get('location'),
+     'destination':o.get('location'),'kind':'goal_started','character_id':oid,'character_name':o['name'],
+     'brain_goal':'socialize','brain_intention':'player_interaction','journal_status':'PLANNED',
+     'request_seq':STATE.get('brain_request_seq',0),'source':'player_interrupt'})
+   log_event('player_interrupt_plan',character_id=cid,character_name=c['name'],target_id=oid,
+             target_name=o['name'],interaction=engine_type,sim_minutes=now,
+             interrupted_goal=old_goal.get('goal') if old_goal else None)
+   meta=INTERACTIONS.get(engine_type,{})   update_relationship(
     cid,oid,
     friendship=meta.get('friendship',1.5),trust=meta.get('trust',.5),
     attraction=meta.get('attraction',0),annoyance=meta.get('annoyance',-.3),
