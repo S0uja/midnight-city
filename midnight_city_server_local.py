@@ -1469,7 +1469,9 @@ def _project_module_paths():
  out={}
  root=ROOT.resolve()
  for name,module in list(sys.modules.items()):
-  if not module or name == '__main__':
+  # __main__ / __mp_main__ are execution aliases, not reloadable modules.
+  # Reloading them with importlib.reload() fails because they have no import spec.
+  if not module or name in {'__main__','__mp_main__'}:
    continue
   path=getattr(module,'__file__',None)
   if not path or not str(path).endswith('.py'):
@@ -1521,11 +1523,18 @@ def hot_reload_code():
   with BRAIN_LOCK:
    importlib.invalidate_caches()
    for name in changed:
-    if name == '__main__':
+    if name in {'__main__','__mp_main__'}:
      continue
     module=sys.modules.get(name)
-    if module is not None:
-     importlib.reload(module)
+    if module is None:
+     continue
+    # Some execution-created modules can have no import spec and cannot be
+    # passed to importlib.reload(). They are handled by the main-module
+    # re-exec below instead.
+    if getattr(module,'__spec__',None) is None:
+     log(f'Console R: skipping non-reloadable module {name}')
+     continue
+    importlib.reload(module)
    HOT_RELOAD_ACTIVE=True
    source=main_path.read_text(encoding='utf8')
    exec(compile(source,str(main_path),'exec'),globals(),globals())
