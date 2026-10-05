@@ -1447,6 +1447,28 @@ class Handler(BaseHTTPRequestHandler):
   return self.reply(404,{'error':'not found'})
  def log_message(self,*args): pass
 
+def console_control_loop():
+ """Development console controls.
+
+ Press R/r in the server console to restart the simulation state without
+ stopping the HTTP server or unloading/reloading MidnightBrain's model.
+ """
+ while True:
+  try:
+   command=input().strip().lower()
+  except (EOFError, KeyboardInterrupt):
+   return
+  if command == 'r':
+   log('Console R: restarting simulation state (AI model stays loaded)')
+   reset()
+   with LOCK:
+    STATE['running']=False
+    STATE['brain_status']='ready' if MODEL_OBJ is not None and BRAIN_ERROR is None else STATE.get('brain_status','offline')
+    STATE['brain_online']=MODEL_OBJ is not None and BRAIN_ERROR is None
+   log('Console R: simulation restarted. AI model was kept loaded.')
+  elif command:
+   log(f'Unknown console command: {command}. Use R to restart simulation.')
+
 def main():
  log(f'Starting Midnight City {VERSION}')
  BRAIN.start(); BRAIN.observe(world_snapshot(),emit_events=False)
@@ -1459,6 +1481,7 @@ def main():
  threading.Thread(target=preload_brain,daemon=True,name='BrainPreload').start()
  log('Startup complete. Waiting for Play.')
  try:
+  threading.Thread(target=console_control_loop,daemon=True,name='ConsoleControl').start()
   while True: time.sleep(1)
  except KeyboardInterrupt: s.shutdown(); s.server_close()
 if __name__=='__main__': main()
