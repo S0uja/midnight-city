@@ -1,5 +1,5 @@
 from __future__ import annotations
-import json, os, re, threading, time, zipfile, io, webbrowser, copy, importlib, sys
+import json, os, re, threading, time, zipfile, io, webbrowser, copy, importlib, sys, difflib
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 try:
@@ -1117,7 +1117,7 @@ def generate_dialogue_reply(cid, oid, text, now, dialogue_context=None):
   msg=str(m.get('text','')).strip()
   if msg: recent_lines.append(f"{'Kirill' if speaker=='Kirill' else o.get('name','NPC')}: {msg}")
  conversation_transcript='\\n'.join(recent_lines[-16:]) or '(conversation has just started)'
- context={'clock':clock(now),'day':STATE.get('day',1),'character':o.get('name','NPC'),'location':o.get('location'),'action':o.get('action'),'mood':mood_label(o),'mood_value':o.get('mood'),'personality':personality_prompt(o),'needs':needs(o),'relationship_to_player':rel,'memory':(o.get('memory',[]) + [m.get('text','') if isinstance(m,dict) else str(m) for m in o.get('memory_items',[])])[-10:],'conversation_transcript':conversation_transcript,'conversation_context':active_context,'current_player_message':text}
+ context={'clock':clock(now),'day':STATE.get('day',1),'character':o.get('name','NPC'),'location':o.get('location'),'action':o.get('action'),'mood':mood_label(o),'mood_value':o.get('mood'),'personality':personality_prompt(o),'needs':needs(o),'relationship_to_player':rel,'memory':(o.get('memory',[]) + [m.get('text','') if isinstance(m,dict) else str(m) for m in o.get('memory_items',[])])[-10:],'conversation_transcript':conversation_transcript,'conversation_context':active_context,'previous_npc_message':next((str(m.get('text','')).strip() for m in reversed(recent) if isinstance(m,dict) and m.get('speaker')==o.get('name')),''),'current_player_message':text}
  system=f"""You are {o.get('name','an NPC')} in a life simulation. You are having a normal, continuous, real-life conversation with Kirill.
 Act like a real adult person, not like an assistant answering isolated prompts.
 
@@ -1139,10 +1139,12 @@ The conversation is continuous. Every new message is a response to what was said
 CONVERSATION CONTINUITY:
 The conversation_transcript is the actual recent chat. Read it as a normal chat before answering.
 The current_player_message is the LAST message from Kirill and must be answered.
+The previous_npc_message is what you said immediately before. It is already visible to Kirill.
+Do not repeat, copy, or paraphrase previous_npc_message.
+If Kirill asks a follow-up, answer the new question or provide the missing information.
+A reply that merely repeats your previous message is WRONG.
 Do not treat every message as a new conversation.
 Do not restart with generic small talk after every message.
-Do not repeat your previous answer. If Kirill asks a follow-up, provide the missing information or react to what he said.
-Do not copy or paraphrase your previous reply just because it is in the transcript.
 Do not constantly introduce new topics.
 Do not constantly explain your memories, personality, plans, needs or current activity unless relevant.
 Use the character's supplied memory, schedule, location, activity, personality and relationship information when relevant, but conversation always comes first.
