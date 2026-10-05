@@ -18,6 +18,7 @@ from ai_constants import (
     COUPLE_STATUSES, ROMANTIC_THRESHOLDS, meets_romantic,
     nearest_location, travel_minutes as ai_travel_minutes,
 )
+from family_role_cheker import check_family_role_interaction
 
 ROOT=Path(__file__).resolve().parent; HTML=ROOT/'index.html'; MAP_FILE=ROOT/'world_map_v6.json'
 MODEL=Path(os.environ.get('MIDNIGHT_BRAIN_MODEL',r'C:\AI\MidnightBrain_v2_MapAgnostic\models\Qwen3-4B-Nymphaea-RP'))
@@ -1194,9 +1195,9 @@ def player_interaction(payload):
   if it not in labels: it='talk'
   engine_type=LABEL_TO_TYPE.get(it,'small_talk')
   hour=(now%1440)/60
-  family_role=str(rel.get('family_role') or '')
-  if family_role and engine_type in {'flirt','hug','kiss','intimacy','date'}:
-   return {'ok':True,'accepted':False,'interaction':engine_type,'target_name':o['name'],'message':f'{o["name"]}: Это неуместно между нами.', 'dialogue':f'Давай без этого. Мы семья — я отношусь к тебе по-семейному.', 'speaker':o['name'],'sim_minutes':now}
+  family_decision=check_family_role_interaction(rel, engine_type, o['name'], now)
+  if family_decision is not None:
+   return family_decision
   # talk/apologize are almost always accepted for UX in the prototype.
   if it in {'talk','apologize'}:
    accepted=.85
