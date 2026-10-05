@@ -995,6 +995,7 @@ def choose_goals(cids,reason='event'):
       p={'goal':'relax','duration_minutes':60,'thought':'','reasons':['before normal bedtime']}
     if p.get('goal')!=original_goal or not p.get('thought'):
      p['thought']=make_inner_thought(c_now,p['goal'],now_now,(p.get('reasons') or ['current context'])[0])
+    STATE.setdefault('day_plans',{})[cid]=remaining_plan
     if active_goal:
      # Brain was thinking ahead while the body kept acting. Store only the
      # intention; it will be rebuilt at the next decision boundary and
@@ -1008,7 +1009,6 @@ def choose_goals(cids,reason='event'):
                active_goal=active_goal.get('goal'))
      applied.append(cid)
      continue
-    STATE.setdefault('day_plans',{})[cid]=remaining_plan
     plan=build_plan(cid,p,seq,src)
     if not _commit_action_locked(cid, now_now, plan, src):
      stale.append(cid); continue
@@ -1371,7 +1371,8 @@ def player_interaction(payload):
    log_event('player_interrupt_plan',character_id=cid,character_name=c['name'],target_id=oid,
              target_name=o['name'],interaction=engine_type,sim_minutes=now,
              interrupted_goal=old_goal.get('goal') if old_goal else None)
-   meta=INTERACTIONS.get(engine_type,{})   update_relationship(
+   meta=INTERACTIONS.get(engine_type,{})
+   update_relationship(
     cid,oid,
     friendship=meta.get('friendship',1.5),trust=meta.get('trust',.5),
     attraction=meta.get('attraction',0),annoyance=meta.get('annoyance',-.3),
