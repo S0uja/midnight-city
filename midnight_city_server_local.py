@@ -1274,10 +1274,9 @@ def fast_forward(minutes):
 def snapshot():
  with LOCK:
   d=copy.deepcopy(STATE); d['journal']=public_journal(); d['ai_mode']=bool(d['ai_mode']); d['ai_busy']=d['brain_busy']; d['ai_waiting_for_plan']=not any(d['goals'].values()) and not d['brain_busy']; d['ai_plan']=next((d['goals'].get(cid) for cid in d['characters'] if cid!=d.get('player_character_id','kirill') and d['goals'].get(cid)),None) or d.get('last_brain'); d['character_plans']=d['goals']; d['kirill']=d['characters']['kirill']; d['version']=VERSION; d['brain_model_path']=str(MODEL); d['brain_adapter_path']=str(ADAPTER); d['brain_error']=BRAIN_ERROR; d['brain_active_characters']=sorted(BRAIN_ACTIVE); d['brain_pending_characters']=sorted(BRAIN_PENDING); d['brain_generation']=copy.deepcopy(STATE.get('brain_generation',{})); d['next_intentions']=copy.deepcopy(STATE.get('next_intentions',{})); d['last_ai']=d.get('last_brain'); d['smart_profiles']={cid:smart_profile(cid) for cid in d['characters']}; d['interaction_options']={cid:[] for cid in d['characters']}; d['player_character_id']=STATE.get('player_character_id','kirill'); d['player_position']=copy.deepcopy(STATE.get('player_position',{'x':16,'y':25})); d['player_mode']=True; d['dialogue_history']=copy.deepcopy(STATE.get('dialogue_history',[])[-40:]); d['dialogue_context']=copy.deepcopy(STATE.get('dialogue_context')); d['dialogue_contexts']=copy.deepcopy(STATE.get('dialogue_contexts',{})); d['selected_target_id']=STATE.get('selected_target_id','sonya')
-  for cid,c in d['characters'].items():
-   for oid,o in d['characters'].items():
-    if cid!=oid and can_socially_meet(c,o):
-     for opt in contextual_options(c,dict(o,id=oid),available_interactions(c,dict(o,id=oid),(d['sim_minutes']%1440)/60),c.get('location'),d['sim_minutes'])[:8]: d['interaction_options'][cid].append({'target_id':oid,'target_name':o['name'],**opt})
+  # Interaction options are calculated on demand when the player opens
+  # an interaction menu. Do not recompute every possible interaction while
+  # polling /api/state: this holds LOCK and can make player movement wait.
   return d
 
 def reset():
