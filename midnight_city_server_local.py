@@ -680,6 +680,31 @@ def advance(minutes,source='clock'):
      # buffered Brain intention first; otherwise choose a deterministic Utility
      # fallback immediately. Brain will continue refining the following goal in
      # the background.
+     queued_day=STATE.setdefault('day_plans',{}).get(cid,[])
+     if queued_day:
+      p_next=queued_day.pop(0)
+      STATE['day_plans'][cid]=queued_day
+      c_next=copy.deepcopy(STATE['characters'][cid]); now_next=tick_end
+      obs_next=obligations(now_next,c_next)
+      nearby_next=[dict(x,id=k) for k,x in STATE['characters'].items() if k!=cid and can_socially_meet(x,c_next)]
+      recent_next=_recent_goal_ids(cid)
+      schedule_next=copy.deepcopy(c_next.get('smart_schedule',[]))
+      ranked_next=score_candidates(c_next,now_next,obs_next,nearby_next,recent_next,schedule_next)
+      allowed_next={x['goal'] for x in ranked_next[:4]}
+      if any(o.get('urgent') for o in obs_next) or p_next.get('goal') not in allowed_next:
+       p_next=utility_choose(c_next,now_next,obs_next,nearby_next,recent_next,schedule_next)
+      plan_next=build_plan(cid,p_next,STATE.get('brain_request_seq',0),'day_plan')
+      STATE['goals'][cid]=plan_next
+      STATE['characters'][cid]['action']=plan_next['label']
+      STATE['action_history'].append({'start':now_next,'end':plan_next['end'],'action':plan_next['goal'],
+        'action_text':plan_next['label'],'from_location':c_next['location'],'location':c_next['location'],
+        'destination':plan_next.get('target_location'),'kind':'goal_started','character_id':cid,
+        'character_name':c_next['name'],'brain_goal':plan_next['goal'],'brain_intention':plan_next['goal'],
+        'thought':p_next.get('thought',''),'journal_status':'PLANNED','request_seq':STATE.get('brain_request_seq',0),
+        'source':'day_plan'})
+      log_event('day_plan_goal_started',character_id=cid,character_name=c_next['name'],sim_minutes=now_next,
+                goal=plan_next['goal'],remaining=len(queued_day),source='day_plan')
+      continue
      buffered=STATE.setdefault('next_intentions',{}).pop(cid,None)
      if buffered:
       c_next=copy.deepcopy(STATE['characters'][cid]); now_next=tick_end
@@ -1375,7 +1400,7 @@ def fast_forward(minutes):
 
 def snapshot():
  with LOCK:
-  d=copy.deepcopy(STATE); d['journal']=public_journal(); d['ai_mode']=bool(d['ai_mode']); d['ai_busy']=d['brain_busy']; d['ai_waiting_for_plan']=not any(d['goals'].values()) and not d['brain_busy']; d['ai_plan']=next((d['goals'].get(cid) for cid in d['characters'] if cid!=d.get('player_character_id','kirill') and d['goals'].get(cid)),None) or d.get('last_brain'); d['character_plans']=d['goals']; d['kirill']=d['characters']['kirill']; d['version']=VERSION; d['brain_model_path']=str(MODEL); d['brain_adapter_path']=str(ADAPTER); d['brain_error']=BRAIN_ERROR; d['brain_active_characters']=sorted(BRAIN_ACTIVE); d['brain_pending_characters']=sorted(BRAIN_PENDING); d['brain_generation']=copy.deepcopy(STATE.get('brain_generation',{})); d['next_intentions']=copy.deepcopy(STATE.get('next_intentions',{})); d['last_ai']=d.get('last_brain'); d['smart_profiles']={cid:smart_profile(cid) for cid in d['characters']}; d['interaction_options']={cid:[] for cid in d['characters']}; d['player_character_id']=STATE.get('player_character_id','kirill'); d['player_position']=copy.deepcopy(STATE.get('player_position',{'x':16,'y':25})); d['player_mode']=True; d['dialogue_history']=dialogue_history_for(STATE.get('selected_target_id','sonya'),40); d['dialogue_histories']=copy.deepcopy(STATE.get('dialogue_histories',{})); d['dialogue_context']=copy.deepcopy(STATE.get('dialogue_context')); d['dialogue_contexts']=copy.deepcopy(STATE.get('dialogue_contexts',{})); d['selected_target_id']=STATE.get('selected_target_id','sonya')
+  d=copy.deepcopy(STATE); d['journal']=public_journal(); d['ai_mode']=bool(d['ai_mode']); d['ai_busy']=d['brain_busy']; d['ai_waiting_for_plan']=not any(d['goals'].values()) and not d['brain_busy']; d['ai_plan']=next((d['goals'].get(cid) for cid in d['characters'] if cid!=d.get('player_character_id','kirill') and d['goals'].get(cid)),None) or d.get('last_brain'); d['character_plans']=d['goals']; d['kirill']=d['characters']['kirill']; d['version']=VERSION; d['brain_model_path']=str(MODEL); d['brain_adapter_path']=str(ADAPTER); d['brain_error']=BRAIN_ERROR; d['brain_active_characters']=sorted(BRAIN_ACTIVE); d['brain_pending_characters']=sorted(BRAIN_PENDING); d['brain_generation']=copy.deepcopy(STATE.get('brain_generation',{})); d['next_intentions']=copy.deepcopy(STATE.get('next_intentions',{})); d['last_ai']=d.get('last_brain'); d['smart_profiles']={cid:smart_profile(cid) for cid in d['characters']}; d['interaction_options']={cid:[] for cid in d['characters']}; d['player_character_id']=STATE.get('player_character_id','kirill'); d['player_position']=copy.deepcopy(STATE.get('player_position',{'x':16,'y':25})); d['player_mode']=True; d['dialogue_history']=dialogue_history_for(STATE.get('selected_target_id','sonya'),40); d['dialogue_histories']=copy.deepcopy(STATE.get('dialogue_histories',{})); d['dialogue_context']=copy.deepcopy(STATE.get('dialogue_context')); d['dialogue_contexts']=copy.deepcopy(STATE.get('dialogue_contexts',{})); d['day_plans']=copy.deepcopy(STATE.get('day_plans',{})); d['selected_target_id']=STATE.get('selected_target_id','sonya')
   # Interaction options are calculated on demand when the player opens
   # an interaction menu. Do not recompute every possible interaction while
   # polling /api/state: this holds LOCK and can make player movement wait.
