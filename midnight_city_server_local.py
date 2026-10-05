@@ -895,7 +895,8 @@ def choose_goals(cids,reason='event'):
     log_event('brain_fallback',error=str(e),request_seq=seq)
   results=[]
   for cid,raw in zip(cids,raws):
-   parsed=parse_goal(raw)
+   day_plan=parse_day_plan(raw)
+   parsed=(day_plan[0] if day_plan else parse_goal(raw))
    with LOCK:
     c=copy.deepcopy(STATE['characters'][cid])
     obs=obligations(now,c)
@@ -916,7 +917,8 @@ def choose_goals(cids,reason='event'):
     parsed=utility; source='utility_sleep_pressure'
    if not parsed.get('thought'):
     parsed['thought']=make_inner_thought(c,parsed['goal'],now,(parsed.get('reasons') or ['current context'])[0])
-   results.append((cid,parsed,source,raw))
+   remaining_plan=[dict(x) for x in day_plan[1:] if x.get('goal') in VALID_GOALS] if day_plan else []
+   results.append((cid,parsed,source,raw,remaining_plan))
 
   applied=[]
   stale=[]
@@ -926,7 +928,7 @@ def choose_goals(cids,reason='event'):
    if epoch!=BRAIN_EPOCH or not STATE['running']:
     log_event('brain_stale_dropped',request_seq=seq,reason='world_reset_or_paused',characters=cids)
     return
-   for cid,p,src,raw in results:
+   for cid,p,src,raw,remaining_plan in results:
     current_generation=int(STATE.get('brain_generation',{}).get(cid,0))
     active_goal=STATE['goals'].get(cid)
     if current_generation!=start_generation.get(cid,0):
@@ -980,6 +982,7 @@ def choose_goals(cids,reason='event'):
                active_goal=active_goal.get('goal'))
      applied.append(cid)
      continue
+    STATE.setdefault('day_plans',{})[cid]=remaining_plan
     plan=build_plan(cid,p,seq,src)
     if not _commit_action_locked(cid, now_now, plan, src):
      stale.append(cid); continue
