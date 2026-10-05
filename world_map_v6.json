@@ -1,0 +1,418 @@
+{
+  "map_id": "midnight_city_v6",
+  "image": "assets/midnight_city_map_v6.png",
+  "dimensions": {
+    "width": 1672,
+    "height": 940
+  },
+  "coordinate_system": "percentage_0_100",
+  "camera": {
+    "type": "oblique_aerial",
+    "orientation": "slightly_angled",
+    "note": "Designed for the new aerial city image; preserve visible building depth."
+  },
+  "semantic_zones": [
+    {
+      "id": "residential_west",
+      "type": "home",
+      "name": "West Residential",
+      "x": 16,
+      "y": 24,
+      "services": [
+        "sleep",
+        "eat",
+        "shower",
+        "rest",
+        "study",
+        "socialize"
+      ]
+    },
+    {
+      "id": "residential_northwest",
+      "type": "home",
+      "name": "Northwest Residential",
+      "x": 27,
+      "y": 18,
+      "services": [
+        "sleep",
+        "eat",
+        "shower",
+        "rest"
+      ]
+    },
+    {
+      "id": "university",
+      "type": "education",
+      "name": "University Campus",
+      "x": 49,
+      "y": 17,
+      "services": [
+        "attend_obligation",
+        "study",
+        "socialize",
+        "recreation"
+      ]
+    },
+    {
+      "id": "student_district",
+      "type": "education",
+      "name": "Student District",
+      "x": 62,
+      "y": 18,
+      "services": [
+        "study",
+        "socialize",
+        "eat"
+      ]
+    },
+    {
+      "id": "business_core",
+      "type": "work",
+      "name": "Business District",
+      "x": 52,
+      "y": 43,
+      "services": [
+        "work",
+        "socialize"
+      ]
+    },
+    {
+      "id": "it_offices",
+      "type": "work",
+      "name": "IT & Offices",
+      "x": 68,
+      "y": 29,
+      "services": [
+        "work"
+      ]
+    },
+    {
+      "id": "hospital",
+      "type": "health",
+      "name": "Hospital",
+      "x": 8,
+      "y": 57,
+      "services": [
+        "healthcare",
+        "work",
+        "rest"
+      ]
+    },
+    {
+      "id": "school",
+      "type": "education",
+      "name": "City School",
+      "x": 43,
+      "y": 24,
+      "services": [
+        "attend_obligation",
+        "work",
+        "study"
+      ]
+    },
+    {
+      "id": "park_west",
+      "type": "recreation",
+      "name": "Central West Park",
+      "x": 27,
+      "y": 39,
+      "services": [
+        "recreation",
+        "socialize",
+        "rest",
+        "walk"
+      ]
+    },
+    {
+      "id": "sports",
+      "type": "recreation",
+      "name": "Sports Complex",
+      "x": 35,
+      "y": 20,
+      "services": [
+        "exercise",
+        "recreation",
+        "socialize"
+      ]
+    },
+    {
+      "id": "downtown",
+      "type": "commercial",
+      "name": "Downtown",
+      "x": 51,
+      "y": 48,
+      "services": [
+        "shop",
+        "eat",
+        "socialize",
+        "recreation",
+        "work"
+      ]
+    },
+    {
+      "id": "shopping",
+      "type": "commercial",
+      "name": "Shopping District",
+      "x": 42,
+      "y": 53,
+      "services": [
+        "shop",
+        "eat",
+        "socialize"
+      ]
+    },
+    {
+      "id": "cafe",
+      "type": "food",
+      "name": "Cafe Quarter",
+      "x": 57,
+      "y": 58,
+      "services": [
+        "eat",
+        "socialize"
+      ]
+    },
+    {
+      "id": "arts",
+      "type": "culture",
+      "name": "Arts & Culture",
+      "x": 72,
+      "y": 55,
+      "services": [
+        "recreation",
+        "socialize",
+        "study",
+        "work"
+      ]
+    },
+    {
+      "id": "nightlife",
+      "type": "social",
+      "name": "Nightlife District",
+      "x": 75,
+      "y": 45,
+      "services": [
+        "socialize",
+        "recreation",
+        "eat"
+      ]
+    },
+    {
+      "id": "entertainment",
+      "type": "recreation",
+      "name": "Entertainment Quarter",
+      "x": 79,
+      "y": 51,
+      "services": [
+        "recreation",
+        "socialize",
+        "eat"
+      ]
+    },
+    {
+      "id": "leisure_park",
+      "type": "recreation",
+      "name": "Grand Leisure Park",
+      "x": 28,
+      "y": 42,
+      "services": [
+        "recreation",
+        "socialize",
+        "rest",
+        "walk",
+        "exercise"
+      ]
+    },
+    {
+      "id": "gym_pool",
+      "type": "recreation",
+      "name": "Gym & Pool",
+      "x": 18,
+      "y": 69,
+      "services": [
+        "exercise",
+        "recreation",
+        "socialize"
+      ]
+    },
+    {
+      "id": "beach",
+      "type": "recreation",
+      "name": "Beach",
+      "x": 14,
+      "y": 85,
+      "services": [
+        "recreation",
+        "socialize",
+        "walk"
+      ]
+    },
+    {
+      "id": "waterfront",
+      "type": "recreation",
+      "name": "Waterfront & Marina",
+      "x": 49,
+      "y": 82,
+      "services": [
+        "recreation",
+        "socialize",
+        "eat",
+        "walk"
+      ]
+    },
+    {
+      "id": "port",
+      "type": "work",
+      "name": "Commercial Port",
+      "x": 86,
+      "y": 79,
+      "services": [
+        "work",
+        "shop"
+      ]
+    },
+    {
+      "id": "industrial",
+      "type": "work",
+      "name": "Industrial District",
+      "x": 87,
+      "y": 57,
+      "services": [
+        "work"
+      ]
+    },
+    {
+      "id": "rail_station",
+      "type": "transport",
+      "name": "Central Rail Station",
+      "x": 65,
+      "y": 39,
+      "services": [
+        "travel",
+        "socialize"
+      ]
+    },
+    {
+      "id": "suburbs_east",
+      "type": "home",
+      "name": "East Suburbs",
+      "x": 90,
+      "y": 25,
+      "services": [
+        "sleep",
+        "eat",
+        "shower",
+        "rest"
+      ]
+    },
+    {
+      "id": "outskirts_north",
+      "type": "nature",
+      "name": "Northern Outskirts",
+      "x": 83,
+      "y": 9,
+      "services": [
+        "recreation",
+        "walk"
+      ]
+    },
+    {
+      "id": "forest_hills",
+      "type": "nature",
+      "name": "Forest Hills",
+      "x": 95,
+      "y": 14,
+      "services": [
+        "recreation",
+        "walk",
+        "rest"
+      ]
+    },
+    {
+      "id": "design_studio",
+      "type": "work",
+      "name": "Design & Photography Studio",
+      "x": 72,
+      "y": 55,
+      "services": [
+        "work",
+        "recreation",
+        "socialize",
+        "creative"
+      ]
+    }
+  ],
+  "districts": [
+    {
+      "id": "residential",
+      "name": "Residential",
+      "zones": [
+        "residential_west",
+        "residential_northwest",
+        "suburbs_east"
+      ]
+    },
+    {
+      "id": "education",
+      "name": "Education",
+      "zones": [
+        "university",
+        "student_district",
+        "school"
+      ]
+    },
+    {
+      "id": "work",
+      "name": "Work & Business",
+      "zones": [
+        "business_core",
+        "it_offices",
+        "hospital",
+        "industrial",
+        "port"
+      ]
+    },
+    {
+      "id": "downtown",
+      "name": "Downtown",
+      "zones": [
+        "downtown",
+        "shopping",
+        "cafe",
+        "rail_station"
+      ]
+    },
+    {
+      "id": "entertainment",
+      "name": "Entertainment & Nightlife",
+      "zones": [
+        "nightlife",
+        "entertainment",
+        "arts",
+        "design_studio"
+      ]
+    },
+    {
+      "id": "leisure",
+      "name": "Leisure & Waterfront",
+      "zones": [
+        "park_west",
+        "sports",
+        "leisure_park",
+        "gym_pool",
+        "beach",
+        "waterfront"
+      ]
+    },
+    {
+      "id": "outskirts",
+      "name": "Outskirts & Nature",
+      "zones": [
+        "outskirts_north",
+        "forest_hills"
+      ]
+    }
+  ],
+  "notes": "Primary Midnight City map. Coordinates are aligned to the actual v6 aerial image; creative Studio is in the Arts & Culture district, not on the waterfront. No thirst mechanic is represented.",
+  "version": "6.1"
+}

@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Midnight City — Life Sim · V20</title>
+<style>
+:root{--bg:#090b10;--panel:#10141b;--panel2:#151a22;--line:#2a313c;--text:#eef2f7;--muted:#8390a0;--accent:#8f7bff;--good:#57d29a;--warn:#ffb25b;--danger:#ff6e7a}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}button,input,textarea{font:inherit}
+body{min-height:100vh}.shell{max-width:1400px;margin:auto;padding:14px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.brand h1{font-size:19px;margin:0}.brand p{margin:4px 0 0;color:var(--muted);font-size:11px}.clock{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);padding:9px 11px;border-radius:12px;font-size:12px}.dot{width:8px;height:8px;border-radius:50%;background:var(--good);box-shadow:0 0 10px var(--good)}
+.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(320px,.75fr);gap:12px}.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}.cardhead{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line)}.cardhead b{font-size:12px}.cardhead span{font-size:10px;color:var(--muted)}
+.world{position:relative;aspect-ratio:1024 / 568;width:100%;height:auto;min-height:0;background:#111;overflow:hidden;border-radius:0 0 16px 16px}.city-map{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:fill;user-select:none;pointer-events:none}.world:after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(5,8,12,.05),rgba(5,8,12,.12));pointer-events:none}.npc{position:absolute;transform:translate(-50%,-50%);width:54px;height:74px;z-index:4;transition:left .25s linear,top .25s linear}.npc .shadow{position:absolute;left:7px;right:7px;bottom:0;height:8px;background:#0008;border-radius:50%}.head{position:absolute;left:14px;top:7px;width:27px;height:27px;border-radius:50%;background:#f2c6a5;border:2px solid #2a2024}.hair{position:absolute;left:11px;top:2px;width:34px;height:22px;border-radius:18px 18px 10px 10px;background:#3b2840}.body{position:absolute;left:12px;top:31px;width:31px;height:31px;border-radius:12px 12px 8px 8px;background:#7062b8}.leg{position:absolute;top:57px;width:9px;height:16px;background:#242a39;border-radius:6px}.leg.l{left:15px}.leg.r{left:31px}.tag{position:absolute;left:50%;top:-27px;transform:translateX(-50%);background:#0d1118ee;border:1px solid #384152;padding:4px 7px;border-radius:7px;font-size:9px;color:#e6ebf2;white-space:nowrap}.npc.selected .tag{border-color:var(--accent);box-shadow:0 0 0 2px rgba(143,123,255,.15)}
+.map-grid{position:absolute;inset:0;z-index:2;pointer-events:none}.map-grid .marker{position:absolute;transform:translate(-50%,-50%);width:10px;height:10px;border-radius:50%;border:2px solid #fff;background:rgba(143,123,255,.9);box-shadow:0 0 0 5px rgba(143,123,255,.18),0 2px 8px #0008}.now{z-index:5}
+.sidebar{display:flex;flex-direction:column;gap:12px}.profile{padding:14px}.hero{display:flex;gap:12px;align-items:center}.avatar{width:72px;height:72px;border-radius:18px;background:linear-gradient(145deg,#312753,#1b2031);display:grid;place-items:center;position:relative;overflow:hidden}.avatar .head{transform:scale(1.55);left:22px;top:14px}.avatar .hair{transform:scale(1.55);left:17px;top:7px}.avatar .body{transform:scale(1.35);left:20px;top:46px}.meta h2{margin:0;font-size:16px}.meta p{margin:4px 0 0;color:var(--muted);font-size:10px}.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}.chip{font-size:9px;padding:5px 7px;border:1px solid var(--line);border-radius:999px;color:#b8c2cf;background:#0d1219}.statgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:12px}.needs-grid{grid-template-columns:repeat(2,1fr)}.stat{padding:9px;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}.stat label{display:block;color:var(--muted);font-size:8px;text-transform:uppercase;letter-spacing:.08em}.stat strong{display:block;margin-top:3px;font-size:12px}.bar{height:5px;background:#232a34;border-radius:999px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:var(--accent)}
+.section{padding:12px 14px}.ai-pill{font-size:9px;padding:6px 8px;border-radius:999px;border:1px solid var(--line)}.ai-pill.on{color:#b9f6d8;border-color:#285d48;background:#11241d}.ai-pill.off{color:#ffb8be;border-color:#5e2930;background:#231317}.ai-pill.busy{color:#ffdca9;border-color:#5a4825;background:#241f12}.ai-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.ai-box{border:1px solid var(--line);background:#0d1218;border-radius:10px;padding:9px}.ai-box span{display:block;color:var(--muted);font-size:8px}.ai-box b{display:block;margin-top:3px;font-size:10px}.ai-dialogue{margin-top:7px;border:1px solid #38384b;background:#11121b;border-radius:10px;padding:9px;font-size:10px;line-height:1.4}.ai-error{display:none;margin-top:7px;color:#ffb8be;font-size:9px;line-height:1.4}.memory{font-size:9px;line-height:1.55;color:#bcc6d2}.memory div{margin:3px 0}.section h3{margin:0 0 8px;font-size:11px}.context{font-size:10px;line-height:1.55;color:#bcc6d2;background:#0c1118;border:1px solid var(--line);padding:10px;border-radius:10px}.context b{color:#eef2f7}.controls{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.controls button{height:44px;border:1px solid var(--line);border-radius:9px;background:#151a22;color:#e3e8ef;font-size:11px}.controls button.active{border-color:var(--accent);background:#241f42}.controls .play{background:var(--accent);border-color:var(--accent);font-weight:700}.speedline{display:flex;gap:6px;flex-wrap:wrap}.speedline button{min-width:52px;height:38px;border:1px solid var(--line);border-radius:9px;background:#121821;color:#dce2ea}.speedline button.active{background:#292248;border-color:var(--accent);color:white;box-shadow:0 0 0 1px rgba(143,123,255,.22),0 0 12px rgba(143,123,255,.14)}.speedline button[data-ai="1"].active{background:#292248;border-color:var(--accent);color:#fff;font-weight:700}
+.log{max-height:260px;overflow:auto;display:flex;flex-direction:column;gap:6px}.event{border:1px solid var(--line);background:#0d1218;padding:8px 9px;border-radius:10px;font-size:9px}.event time{color:#a98fff;font-weight:700;margin-right:7px}.event small{display:block;color:var(--muted);margin-top:4px}.watch{display:grid;grid-template-columns:1fr 1fr;gap:7px}.watch .item{border:1px solid var(--line);background:#0d1218;border-radius:10px;padding:9px}.watch .item span{display:block;color:var(--muted);font-size:8px}.watch .item b{display:block;margin-top:3px;font-size:10px}
+.timeline{height:34px;border-top:1px solid var(--line);background:#0c1016;display:flex;align-items:center;padding:0 10px;gap:2px}.tick{height:8px;background:#2b3240;flex:1;border-radius:2px}.tick.hot{background:#8f7bff}.now{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);background:#0b1118;border:1px solid var(--accent);padding:5px 8px;border-radius:7px;font-size:9px;color:#fff}
+textarea,input{width:100%;background:#0d1218;color:#eef2f7;border:1px solid var(--line);border-radius:9px;padding:9px;outline:none;font-size:11px}textarea{min-height:90px;resize:vertical}button{cursor:pointer}.muted{color:var(--muted);font-size:9px}
+
+.action-console{border-top:1px solid var(--line);background:#0b1017;padding:14px;min-height:360px}
+.action-console-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+.action-console-head>div:first-child{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.action-console-head b{font-size:12px}.action-console-head span{font-size:9px;color:var(--muted)}
+.action-live{font-size:8px;padding:5px 7px;border:1px solid #285d48;color:#b9f6d8;background:#11241d;border-radius:999px;white-space:nowrap}
+.action-live i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--good);margin-right:5px;box-shadow:0 0 8px var(--good)}
+.action-current{display:grid;grid-template-columns:minmax(0,1.8fr) repeat(4,minmax(92px,1fr));gap:7px;margin-bottom:8px}
+.action-current>div{border:1px solid var(--line);background:#101720;border-radius:10px;padding:9px}
+.action-current span{display:block;color:var(--muted);font-size:8px}.action-current strong{display:block;margin-top:4px;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.action-current-main strong{font-size:12px;color:#f2efff}
+.action-feed{height:265px;max-height:265px;overflow:auto;display:flex;flex-direction:column;gap:5px;padding-right:2px}
+.action-row{display:grid;grid-template-columns:54px minmax(0,1fr) auto;gap:8px;align-items:center;border:1px solid var(--line);background:#0e141c;border-radius:9px;padding:8px 9px;font-size:9px}
+.action-row time{color:#a98fff;font-weight:700}.action-row .desc{min-width:0}.action-row .desc b{display:block;font-size:10px;color:#eef2f7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.action-row .desc small{display:block;margin-top:3px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.action-row .pill{font-size:8px;padding:4px 6px;border:1px solid var(--line);border-radius:999px;color:#cfd8e3}.action-row.empty{display:block;color:var(--muted);text-align:center;padding:16px}
+.action-row .desc small{line-height:1.25}
+@media(max-width:980px){.action-current{grid-template-columns:1fr 1fr}.action-current-main{grid-column:1/-1}}
+@media(max-width:700px){.action-console{padding:10px 11px 12px}.action-row{grid-template-columns:48px minmax(0,1fr)}}
+@media(max-width:980px){.grid{grid-template-columns:1fr}.world{height:520px}}@media(max-width:700px){.shell{padding:8px}.top{align-items:flex-start}.clock{font-size:11px}.world{height:440px}.district{font-size:9px;padding:8px}.poi{font-size:8px;padding:5px 7px}.npc{transform:translate(-50%,-50%) scale(.9)}.controls{grid-template-columns:repeat(3,1fr)}.watch{grid-template-columns:1fr 1fr}.brand h1{font-size:16px}.cardhead{padding:10px 11px}.section{padding:10px 11px}}
+
+.smart-card .smart-thought{font-size:15px;line-height:1.45;margin:8px 0 5px}
+.smart-card .smart-meta{font-size:11px;opacity:.55;margin-bottom:10px}
+.smart-card .smart-diary{font-size:12px;line-height:1.45;opacity:.82;padding:10px;border-radius:10px;background:rgba(255,255,255,.035)}
+.smart-pen{display:flex;gap:7px;margin-top:10px}
+.smart-pen input{flex:1;min-width:0;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.15);color:inherit;border-radius:8px;padding:8px 10px}
+.smart-pen button{border:0;border-radius:8px;padding:8px 11px;cursor:pointer}
+
+/* V28.1 Living Character UI */
+.grid{display:flex;flex-direction:column;gap:12px;width:100%}
+.world-card{width:100%}
+.world{height:560px;aspect-ratio:auto;border-radius:0;}
+.action-console{min-height:0;height:370px}
+.action-feed{height:285px;max-height:285px}
+.character-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;width:100%}
+.character-card{min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.character-head{display:flex;align-items:center;gap:12px;padding:14px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#131923,#10141b)}
+.character-head.alice{box-shadow:inset 4px 0 0 #f06fae}.character-head.kirill{box-shadow:inset 4px 0 0 #4f9bd8}
+.character-card .avatar{width:64px;height:64px;flex:0 0 auto}.character-card .meta h2{font-size:17px}.character-card .meta p{font-size:10px}
+.character-body{padding:12px;display:grid;gap:10px}
+.char-section{border:1px solid var(--line);background:#0d1219;border-radius:12px;padding:10px}
+.char-section h3{margin:0 0 8px;font-size:11px}.char-section .muted{line-height:1.45}
+.char-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.char-needs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.char-stat{padding:8px;border:1px solid var(--line);border-radius:9px;background:var(--panel2)}
+.char-stat label{display:block;color:var(--muted);font-size:8px;text-transform:uppercase;letter-spacing:.06em}.char-stat strong{display:block;margin-top:3px;font-size:11px}
+.char-bar{height:4px;background:#232a34;border-radius:999px;overflow:hidden;margin-top:5px}.char-bar i{display:block;height:100%;background:var(--accent)}
+.personality-grid{display:flex;flex-wrap:wrap;gap:5px}.personality-pill{padding:5px 7px;border:1px solid #343d4a;background:#111720;border-radius:999px;font-size:8px;color:#cfd7e2}.personality-pill b{color:#fff}
+.relationship-status{display:flex;align-items:center;justify-content:center;margin-bottom:5px;padding:5px 8px;border:1px solid #384152;border-radius:7px;background:#0d1118;color:#cfd7e3;font-size:8px;text-transform:uppercase;letter-spacing:.05em}.relationship-status.friend{border-color:#365b46;color:#7ee0a8}.relationship-status.romantic{border-color:#74475f;color:#ff9fcb}.relationships{display:grid;gap:6px}.relationship{display:grid;grid-template-columns:90px 1fr;gap:8px;align-items:center}.relationship-name{font-size:9px;color:#e9edf4}.relationship-bars{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}.rel{font-size:7px;color:var(--muted);background:#111720;border:1px solid #28303b;border-radius:6px;padding:4px;text-align:center}.rel b{display:block;color:#e9edf4;font-size:8px;margin-top:1px}
+.memory-list{max-height:110px;overflow:auto;font-size:9px;line-height:1.5;color:#bcc6d2}.memory-list div{margin:3px 0}.goal-list{display:flex;flex-wrap:wrap;gap:5px}.goal-pill{font-size:8px;padding:5px 7px;border-radius:999px;border:1px solid #343d4a;background:#111720;color:#cfd7e2}
+.char-thought{font-size:11px;line-height:1.45;color:#eef2f7}.char-thought em{color:#aab5c3;font-size:9px}.char-diary{font-size:9px;line-height:1.45;color:#b9c4d0;margin-top:6px}
+.shared-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:12px}.shared-card{min-width:0}
+.action-row.alice-row{border-color:#d85d99;background:linear-gradient(90deg,rgba(240,111,174,.10),#0e141c)}
+.action-row.alice-row:hover{box-shadow:0 0 0 1px rgba(240,111,174,.25)}
+.action-row.kirill-row{border-color:#4f8fc4;background:linear-gradient(90deg,rgba(79,155,216,.10),#0e141c)}
+.action-row.kirill-row:hover{box-shadow:0 0 0 1px rgba(79,155,216,.25)}
+.action-row.interaction-row{border-color:#35e88a;background:linear-gradient(90deg,rgba(53,232,138,.15),rgba(53,232,138,.04),#0e141c);box-shadow:0 0 10px rgba(53,232,138,.08)}
+.action-row.interaction-row time{color:#62f0a5}.action-row.interaction-row .pill{border-color:#35b974;color:#9dffc8}
+.journal-filter{display:flex;align-items:center;gap:6px;padding:7px 9px;border-bottom:1px solid var(--line);background:#0b1016;flex-wrap:wrap}
+.journal-filter>span{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:2px}
+.journal-filter button,.journal-filter select{height:27px;border:1px solid var(--line);border-radius:7px;background:#121923;color:#cfd8e3;font-size:9px;padding:0 9px;cursor:pointer}
+.journal-filter button.active{border-color:#35e88a;color:#9dffc8;background:rgba(53,232,138,.10)}
+.journal-filter select{margin-left:auto;min-width:145px;outline:none}
+@media(max-width:700px){.journal-filter select{margin-left:0;width:100%}}
+@media(max-width:1050px){.char-stats{grid-template-columns:repeat(2,1fr)}.char-needs{grid-template-columns:repeat(2,1fr)}.shared-row{grid-template-columns:1fr}.world{height:500px}}
+@media(max-width:700px){.shell{padding:8px}.character-row{grid-template-columns:1fr}.world{height:420px}.action-console{height:360px}.action-feed{height:275px}.char-needs{grid-template-columns:repeat(2,1fr)}.character-head{padding:11px}.character-body{padding:10px}.relationship{grid-template-columns:72px 1fr}.relationship-bars{gap:2px}}
+
+
+.player-controlled{outline:2px solid #4f9bd8;box-shadow:0 0 0 5px rgba(79,155,216,.12)}
+.dialogue-overlay{position:absolute;inset:0;z-index:30;display:none;align-items:flex-end;justify-content:center;background:rgba(4,7,11,.38);backdrop-filter:blur(2px)}.dialogue-box{width:min(620px,94%);margin:0 0 22px;background:#10161f;border:1px solid #526174;border-radius:18px;padding:14px;box-shadow:0 20px 60px #000b}.dialogue-head{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #27313e;padding-bottom:9px}.dialogue-head b{display:block;font-size:14px}.dialogue-head span{display:block;color:#7f8b9a;font-size:9px;margin-top:2px}.dialogue-head button{width:32px;height:32px;border:1px solid #303b49;border-radius:9px;background:#171e28;color:#ccd5df}.dialogue-text{min-height:72px;padding:18px 8px;font-size:14px;line-height:1.55;color:#eef3f8}.dialogue-ok{width:100%;height:40px;border:1px solid #8f7bff;border-radius:10px;background:#292248;color:#fff;font-weight:700}.interaction-overlay{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(5,8,12,.58);backdrop-filter:blur(2px)}
+.interaction-menu{width:min(430px,92%);background:#10151e;border:1px solid #3b4554;border-radius:18px;padding:16px;box-shadow:0 18px 50px #0009}
+.interaction-menu h3{margin:0;font-size:16px}.interaction-menu p{margin:5px 0 12px;color:#9ba7b6;font-size:10px}.interaction-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.interaction-actions button{min-height:44px;border:1px solid #303946;border-radius:10px;background:#171d27;color:#eef2f7;text-align:left;padding:9px 11px;cursor:pointer}.interaction-actions button:hover{border-color:#8f7bff;background:#211d38}.interaction-actions button.cancel{grid-column:1/-1;text-align:center;color:#ffb8be}.proximity{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:12;padding:7px 10px;border-radius:999px;background:#0b1118dd;border:1px solid #4f9bd8;color:#dbeeff;font-size:9px;display:none}
+.player-help{font-size:9px;color:#8995a4;margin-top:7px}
+.ff{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.ff button{height:34px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:#121821;color:#dce2ea;font-size:10px}.ff button:hover{border-color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="shell" id="app">
+  <div class="top">
+    <div class="brand"><h1>🌙 MIDNIGHT CITY <span style="font-size:9px;color:#8390a0;font-weight:500">V32.0</span></h1><p>2D life simulation · autonomous characters · needs + personality + goals + memory + spontaneity</p></div>
+    <div class="clock"><span class="dot"></span><b id="day">Friday</b><span id="clock">23:47</span><span id="dateLabel">Day 1</span></div>
+  </div>
+  <div class="grid">
+    <section class="card world-card">
+      <div class="cardhead"><b>City Map</b><span id="locLabel">Downtown · Night Club</span></div>
+      <div class="world" id="world">
+        <img class="city-map" src="assets/midnight_city_map_v6.png" alt="Midnight City map" draggable="false">
+        <div class="map-grid" aria-hidden="true"></div>
+        <div id="npcLayer"></div>
+        <div class="npc player-controlled" id="npcKirill" style="left:16%;top:25%;transform:translate(-50%,-50%) scale(.92)"><div class="tag" id="npcKirillTag">Kirill · Apartments</div><div class="hair" style="background:#26364a"></div><div class="head"></div><div class="body" style="background:#4f8aa8"></div><div class="leg l"></div><div class="leg r"></div><div class="shadow"></div></div>
+        <div class="proximity" id="proximity">ПКМ по персонажу — взаимодействия</div><div class="dialogue-overlay" id="dialogueOverlay"><div class="dialogue-box"><div class="dialogue-head"><div><b id="dialogueSpeaker">Sonya</b><span id="dialogueTime">Сейчас</span></div><button id="dialogueClose">✕</button></div><div id="dialogueHistory" style="max-height:220px;overflow:auto;margin:0 0 9px;padding:0 4px"></div><div class="dialogue-text" id="dialogueText">…</div><div style="display:flex;gap:7px"><input id="dialogueInput" type="text" maxlength="500" placeholder="Напишите сообщение…" style="flex:1;height:40px;border:1px solid #303b49;border-radius:10px;background:#0b1017;color:#eef3f8;padding:0 11px"><button class="dialogue-ok" id="dialogueSend" style="width:110px">Отправить</button></div><button class="dialogue-ok" id="dialogueOk" style="margin-top:7px;background:#151a22;border-color:#303b49">Закрыть</button></div></div><div class="interaction-overlay" id="interactionOverlay"><div class="interaction-menu"><h3 id="interactionTitle">💬 Персонаж</h3><p id="interactionHint">Вы рядом. Что хотите сделать?</p><div class="interaction-actions"><button data-action="talk">💬 Поговорить</button><button data-action="eat_together">🍽️ Предложить пообедать</button><button data-action="walk_together">🚶 Предложить погулять</button><button data-action="date">❤️ Предложить свидание</button><button data-action="flirt">😉 Флирт</button><button data-action="hug">🤗 Обнять</button><button data-action="kiss">💋 Поцеловать</button><button data-action="intimacy">❤️‍🔥 Интимная близость</button><button class="cancel" data-action="cancel">✕ Отмена</button></div></div></div><div class="now">LIVE WORLD · <span id="speedText">1×</span></div>
+      </div>
+      <div class="timeline" id="timeline"></div>
+      <section class="action-console">
+        <div class="action-console-head"><div><b>Вывод действий</b><span>Реальные действия тела всех персонажей</span></div><div class="action-live" id="actionLive"><i></i> LIVE</div></div>
+        <div class="journal-filter" id="journalFilter">
+          <span>Фильтр:</span>
+          <button type="button" data-jfilter="all" class="active">Все</button>
+          <button type="button" data-jfilter="interactions">🤝 Только взаимодействия</button>
+          <select id="interactionTypeFilter" aria-label="Тип взаимодействия"><option value="all">Все взаимодействия</option></select>
+        </div>
+        <div class="action-current">
+          <div class="action-current-main"><span>Текущее действие NPC</span><strong id="actionConsoleCurrent">Ожидание решения AI</strong></div>
+          <div class="action-current-side"><span>Намерение</span><strong id="actionConsoleIntent">—</strong></div>
+          <div class="action-current-side"><span>Цель</span><strong id="actionConsoleTarget">—</strong></div>
+          <div class="action-current-side"><span>Место</span><strong id="actionConsoleLocation">—</strong></div>
+          <div class="action-current-side"><span>До</span><strong id="actionConsoleUntil">—</strong></div>
+        </div>
+        <div class="action-feed" id="actionFeed"><div class="action-row empty">Журнал запускается вместе с MidnightBrain и обновляется после каждого решения.</div></div>
+      </section>
+    </section>
+
+    <div class="character-row" id="characterCards"></div>
+
+    <div class="shared-row">
+      <section class="card section shared-card"><h3>Time Control</h3><div class="controls"><button id="play" class="play">▶ Play</button><button id="pause">Ⅱ Pause</button><button id="next">⏭ Event</button><button id="reset">↺ Reset</button><button id="step">+5 min</button></div><div class="ff"><button data-ff="60">+1 час</button><button data-ff="360">+6 часов</button><button data-ff="1440">+1 день</button><button data-ff="10080">+7 дней</button><button data-ff="43200">+30 дней</button></div><div class="player-help">🎮 Ты играешь за Kirill · WASD / стрелки — ходить · ПКМ по персонажу — открыть взаимодействия.</div><div style="height:8px"></div><div class="speedline" id="speeds"><button data-speed="1" class="active">1×</button><button data-speed="2">2×</button><button data-speed="4">4×</button><button data-speed="8">8×</button><button data-speed="16">16×</button><button data-ai="1">AI</button></div></section>
+      <section class="card section shared-card"><h3>AI Brain <span id="aiStatus" class="ai-pill off">MidnightBrain offline</span></h3><div class="ai-grid"><div class="ai-box"><span>Executed</span><b id="aiAction">Waiting for decision</b></div><div class="ai-box"><span>Brain intent</span><b id="aiIntent">—</b></div><div class="ai-box"><span>Emotion</span><b id="aiEmotion">—</b></div><div class="ai-box"><span>Plan until</span><b id="aiNext">—</b></div><div class="ai-box"><span>Mode</span><b id="aiModeLabel">Event-driven Brain</b></div></div><div class="ai-dialogue" id="aiDialogue">No AI plan yet.</div><div class="muted" id="planRemaining" style="margin-top:6px">No active plan</div><div class="ai-dialogue" id="aiReason" style="margin-top:6px;display:none"></div><button id="testAi" style="margin-top:7px;width:100%;height:38px;border:1px solid var(--line);border-radius:9px;background:#151a22;color:#e3e8ef">🧠 Ask all residents now</button><button id="downloadLogs" style="margin-top:7px;width:100%;height:38px;border:1px solid var(--line);border-radius:9px;background:#111822;color:#cfd8e3">📦 Export diagnostics / logs</button><div id="aiError" class="ai-error"></div></section>
+    </div>
+  </div>
+
+<script>
+(() => {
+const state={sim_minutes:23*60+47,day:1,running:false,speed:1,comfy_online:null,ai_status:'ready',ai_error:null,ai_busy:false,ai_waiting_for_plan:true,ai_plan:null,last_ai:null,characters:{},character_plans:{},events:[],action_history:[]};
+const $=id=>document.getElementById(id);
+function fmt(m){m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')}
+function escapeHtml(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function locPos(loc){return {'Night Club':[75,45],'Rooftop':[52,43],'Hotel':[52,43],'Cafe':[57,58],'Apartments':[16,24],'Studio':[72,55],'Downtown':[51,48],'Beach':[14,85],'College':[49,17],'Grocery':[42,53],'Clinic':[8,57],'Work':[68,29],'Park':[27,39],'Gym':[18,69],'Waterfront':[49,82],'Port':[86,79],'Rail Station':[65,39]}[loc]||[16,25]}
+function pct(v){return Math.max(0,Math.min(100,Math.round(Number(v)||0)))}
+function humanLabel(k){return String(k||'').replaceAll('_',' ').replace(/\b\w/g,x=>x.toUpperCase())}
+function relationMarkup(cid,c){
+ const rels=c.relationships||{}; const ids=Object.keys(rels); if(!ids.length)return '<div class="muted">Пока нет значимых отношений.</div>';
+ return '<div class="relationships">'+ids.map(oid=>{const r=rels[oid]||{};const other=(state.characters&&state.characters[oid])||{};const name=other.name||humanLabel(oid);let status=r.status||((Number(r.friendship||0)>=35&&Number(r.trust||0)>=30)?'friend':'acquaintance');let label=status==='boyfriend'?'Парень':status==='girlfriend'?'Девушка':status==='friend'?'Друзья':'Знакомые';let cls=(status==='boyfriend'||status==='girlfriend')?'romantic':status==='friend'?'friend':'';return '<div class="relationship"><div class="relationship-name">'+escapeHtml(name)+'</div><div><div class="relationship-status '+cls+'">'+label+'</div><div class="relationship-bars">'+[['friendship','Friend'],['trust','Trust'],['attraction','Attr'],['annoyance','Annoy'],['respect','Respect']].map(([key,label])=>'<div class="rel">'+label+'<b>'+pct(r[key])+'</b></div>').join('')+'</div></div></div>'}).join('')+'</div>';
+}
+function characterCard(cid,c,d){
+ const isPlayer=cid==='kirill'; const color=isPlayer?'kirill':(cid==='sonya'?'alice':'npc'); const prof=c.personality||{}; const needs=[['hunger','Голод'],['sleepiness','Сонливость'],['hygiene','Гигиена'],['fun','Развлечение'],['social_need','Социальность'],['stress','Стресс'],['comfort','Комфорт'],['energy','Энергия']];
+ const mem=(c.memory_items||c.episodic_memory||[]).slice(-8).reverse(); const goals=(c.goals||[]); const sp=(d.smart_profiles||{})[cid]||{}; const thoughts=sp.inner_thoughts||c.inner_thoughts||[]; const diary=sp.diary||c.diary||[]; const thought=thoughts[thoughts.length-1]; const lastDiary=diary[diary.length-1];
+ const chips=Object.entries(prof).slice(0,6).map(([k,v])=>'<span class="personality-pill">'+humanLabel(k)+' <b>'+Math.round(Number(v)*100)+'%</b></span>').join('');
+ const stats=[['Mood',c.mood],['Energy',c.energy],['Social',100-(Number(c.social_need)||0)],['Stress',c.stress]].map(([lab,v])=>'<div class="char-stat"><label>'+lab+'</label><strong>'+pct(v)+'%</strong><div class="char-bar"><i style="width:'+pct(v)+'%"></i></div></div>').join('');
+ const needHtml=needs.map(([key,lab])=>'<div class="char-stat"><label>'+lab+'</label><strong>'+pct(c[key])+'%</strong><div class="char-bar"><i style="width:'+pct(c[key])+'%"></i></div></div>').join('');
+ const current=d.goals?.[cid]||d.next_intentions?.[cid]||{};
+ const routine=c.routine||{};
+ const context='<b>Occupation:</b> '+escapeHtml(c.occupation||'—')+'<br><b>Home:</b> '+escapeHtml(c.home||'—')+'<br><b>Routine:</b> '+escapeHtml(routine.wake||'07:30')+' wake · '+escapeHtml(routine.sleep||'00:00')+' sleep<br><b>Action:</b> '+escapeHtml(c.action||'—')+'<br><b>Location:</b> '+escapeHtml(c.location||'—')+(c.education?'<br><b>Education:</b> '+escapeHtml(c.education.program||'')+' · Year '+escapeHtml(c.education.year||''):'');
+ return '<div class="character-head '+color+'"><div class="avatar"><div class="hair" '+(isPlayer?'style="background:#26364a"':'')+'></div><div class="head"></div><div class="body" '+(isA?'':'style="background:#4f8aa8"')+'></div></div><div class="meta"><h2>'+escapeHtml(c.name||humanLabel(cid))+'</h2><p>'+escapeHtml(String(c.age||'—'))+' · '+escapeHtml(c.occupation||'—')+' · '+escapeHtml(c.home||'—')+'</p><div class="chips">'+chips+'</div></div></div><div class="character-body"><div class="char-section"><h3>Состояние</h3><div class="char-stats">'+stats+'</div></div><div class="char-section"><h3>Потребности</h3><div class="char-needs">'+needHtml+'</div></div><div class="char-section"><h3>Отношения</h3>'+relationMarkup(cid,c)+'</div><div class="char-section"><h3>Личность</h3><div class="personality-grid">'+(chips||'<span class="muted">—</span>')+'</div></div><div class="char-section"><h3>Текущая жизнь</h3><div class="context">'+context+'</div></div><div class="char-section"><h3>Цели</h3><div class="goal-list">'+goals.map(x=>'<span class="goal-pill">'+escapeHtml(x)+'</span>').join('')+'</div><div class="muted" style="margin-top:7px">Сейчас: '+escapeHtml(current.action_text||current.label||current.goal||c.action||'—')+'</div></div><div class="char-section"><h3>Память</h3><div class="memory-list">'+(mem.length?mem.map(x=>'<div>• '+escapeHtml(typeof x==='string'?x:(x.text||x.summary||''))+'</div>').join(''):'<div class="muted">Память пока пуста.</div>')+'</div></div><div class="char-section"><h3>Smart Zoi · Inner Thought</h3><div class="char-thought">'+escapeHtml(thought?.text||'Ожидание следующей мысли…')+'</div><div class="char-diary">'+escapeHtml(lastDiary?.text||'Вечерняя рефлексия ещё не выполнена.')+'</div>'+(cid==='sonya'?'<div class="smart-pen"><input id="smartPen" placeholder="Дать Sonya мысль / идею…"><button id="smartPenBtn">Вложить</button></div>':'')+'</div></div>';
+}
+function buildJournalCards(raw){
+ const src=(Array.isArray(raw)?raw:[]).filter(h=>h && h.kind!=='goal_completed');
+ const out=[]; const byKey=new Map();
+ for(const h of src){
+   // Technical progress events are intentionally hidden from the player journal.
+   if(h.event_type==='action_progress' || h.type==='action_progress' || h.action==='action_progress') continue;
+   const cid=String(h.character_id||h.character_name||'');
+   const seq=h.request_seq!=null?String(h.request_seq):'';
+   const action=String(h.action||'');
+   const key=(h.kind==='body_action'&&seq)?`${cid}|${seq}|${action}`:'';
+   if(key && byKey.has(key)){
+     const existing=byKey.get(key);
+     existing.end=Math.max(Number(existing.end)||0,Number(h.end)||0);
+     if(h.journal_status==='DONE') existing.journal_status='DONE';
+     if(h.destination) existing.destination=h.destination;
+     if(h.location) existing.location=h.location;
+     if(h.from_location) existing.from_location=h.from_location;
+     continue;
+   }
+   const copy={...h};
+   if(key) byKey.set(key,copy);
+   out.push(copy);
+ }
+ // A fallback for old logs without request_seq: merge immediately adjacent identical actions.
+ const merged=[];
+ for(const h of out){
+   const prev=merged[merged.length-1];
+   if(prev && !h.request_seq && !prev.request_seq && prev.character_id===h.character_id && prev.action===h.action && prev.action_text===h.action_text && Number(h.start)<=Number(prev.end)+1){
+     prev.end=Math.max(Number(prev.end)||0,Number(h.end)||0);
+     prev.journal_status=h.journal_status==='DONE'?'DONE':prev.journal_status;
+   }else merged.push(h);
+ }
+ return merged.slice(-32).reverse();
+}
+
+function isInteractionRow(h,hist){
+ const action=String(h.action||'').toLowerCase(); const text=String(h.action_text||'').toLowerCase();
+ if(!/(social|talk|meet|interact|chat|разгов|общ|встрет)/.test(action+' '+text)) return false;
+ const other=hist.find(x=>x!==h && x.character_id!==h.character_id && Number(x.start)<=Number(h.end) && Number(x.end)>=Number(h.start) && String(x.location||'')===String(h.location||''));
+ return !!other || action.includes('social');
+}
+let journalFilter='all';
+let interactionTypeFilter='all';
+function interactionType(h){
+ const a=String(h.interaction_type||h.interaction?.type||h.social_action||h.action||'').toLowerCase().trim();
+ if(a==='social_interaction') return String(h.interaction?.name||h.action_text||'interaction').toLowerCase().replace(/\s+/g,'_');
+ return a;
+}
+function setupJournalFilter(hist){
+ const wrap=$('journalFilter'); if(!wrap) return;
+ [...wrap.querySelectorAll('button[data-jfilter]')].forEach(b=>b.classList.toggle('active',b.dataset.jfilter===journalFilter));
+ const sel=$('interactionTypeFilter'); if(!sel)return;
+ const types=[]; hist.filter(h=>isInteractionRow(h,hist)).forEach(h=>{const t=interactionType(h);if(t&&t!=='social'&&!types.includes(t))types.push(t)});
+ const current=interactionTypeFilter;
+ sel.innerHTML='<option value="all">Все взаимодействия</option>'+types.map(t=>'<option value="'+escapeHtml(t)+'">'+escapeHtml(humanLabel(t))+'</option>').join('');
+ sel.value=types.includes(current)?current:'all';
+ interactionTypeFilter=sel.value;
+ sel.disabled=journalFilter!=='interactions';
+ [...wrap.querySelectorAll('button[data-jfilter]')].forEach(b=>{b.onclick=()=>{journalFilter=b.dataset.jfilter;setupJournalFilter(hist);render(state)}});
+ sel.onchange=()=>{interactionTypeFilter=sel.value;render(state)};
+}
+function filteredJournal(hist){
+ if(journalFilter!=='interactions') return hist;
+ return hist.filter(h=>isInteractionRow(h,hist) && (interactionTypeFilter==='all'||interactionType(h)===interactionTypeFilter));
+}
+
+let selectedTargetId='sonya';
+let dialogueTargetId='sonya';
+function npcColor(cid){return ({sonya:'#7b62b8',anya:'#b56a91',natalia:'#b78a5a',katya:'#5f8eaf'}[cid]||'#7062b8');}
+function renderNpcLayer(chars){
+ const layer=$('npcLayer'); if(!layer)return;
+ const npcIds=Object.keys(chars).filter(cid=>cid!=='kirill');
+ layer.innerHTML=npcIds.map(cid=>{const c=chars[cid]||{};const [x,y]=locPos(c.location);return '<div class="npc npc-resident" data-cid="'+escapeHtml(cid)+'" id="npc-'+escapeHtml(cid)+'" style="left:'+x+'%;top:'+y+'%"><div class="tag">'+escapeHtml(c.name||cid)+' · '+escapeHtml(c.location||'')+'</div><div class="hair" style="background:'+npcColor(cid)+'"></div><div class="head"></div><div class="body" style="background:'+npcColor(cid)+'"></div><div class="leg l"></div><div class="leg r"></div><div class="shadow"></div></div>';}).join('');
+ layer.querySelectorAll('.npc-resident').forEach(el=>el.addEventListener('contextmenu',e=>{e.preventDefault();selectedTargetId=el.dataset.cid;showInteraction(selectedTargetId);}));
+}
+function showInteraction(targetId=selectedTargetId){ selectedTargetId=targetId||selectedTargetId||'sonya'; interactionOpen=true; setTemporaryOneX(); const c=state.characters?.[selectedTargetId]||{}; const title=$('interactionTitle'); if(title)title.textContent='💬 '+(c.name||'Персонаж'); const ov=$('interactionOverlay'); if(ov)ov.style.display='flex'; const pr=$('proximity'); if(pr)pr.style.display='none'; }
+function render(d){
+ Object.assign(state,d); if(d.player_position) playerPos={x:Number(d.player_position.x||16),y:Number(d.player_position.y||25)}; const chars=d.characters||{}; const k=chars.kirill||{}; const targetId=d.selected_target_id||selectedTargetId||'sonya'; const target=chars[targetId]||chars.sonya||{}; const abs=d.sim_minutes%1440;
+ $('day').textContent=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][(d.day-1)%7]||'Friday'; $('dateLabel').textContent='Day '+d.day; $('clock').textContent=fmt(abs);
+ $('locLabel').textContent=(target.location||'—')+' · '+(d.current_location_type||'—');
+ renderNpcLayer(chars); const pp=d.player_position||locPos(k.location); const [kx,ky]=[Number(pp.x||16),Number(pp.y||25)]; $('npcKirill').style.left=kx+'%';$('npcKirill').style.top=ky+'%';$('npcKirillTag').textContent='Kirill · '+(k.location||'');
+ const cards=$('characterCards'); if(cards)cards.innerHTML=Object.entries(chars).map(([cid,c])=>characterCard(cid,c,d)).join('');
+ if($('smartPenBtn'))$('smartPenBtn').onclick=async()=>{const input=$('smartPen');const text=(input?.value||'').trim();if(!text)return;await post('/api/pen',{text,character_id:'sonya'});if(input)input.value='';};
+ if($('smartPen'))$('smartPen').onkeydown=e=>{if(e.key==='Enter')$('smartPenBtn')?.click();};
+ $('speedText').textContent=d.ai_mode?'AI':((d.speed||1)+'×'); $('step').disabled=!!d.ai_mode; $('step').title=d.ai_mode?'AI jumps directly from one meaningful event to the next.':'Advance 5 simulated minutes';
+ $('aiModeLabel').textContent=d.ai_mode?'Event-driven AI':'Live simulation'; const comfy=$('aiStatus'); if(comfy){comfy.textContent=d.ai_busy?'AI planning…':(d.ai_waiting_for_plan?'Waiting for AI':(d.brain_online?'MidnightBrain':'MidnightBrain offline'));comfy.className='ai-pill '+(d.ai_busy?'busy':(d.ai_waiting_for_plan?'busy':(d.brain_online?'on':'off')))}
+ const plan=d.ai_plan,last=d.last_ai; $('aiAction').textContent=plan?.action_text||plan?.label||last?.action_text||last?.label||target.action||'Waiting for Brain goal'; $('aiIntent').textContent=plan?.goal||plan?.brain_intention||last?.goal||last?.brain_intention||'—'; $('aiEmotion').textContent=plan?.emotion||last?.emotion||'—'; $('aiDialogue').textContent=plan?.dialogue||last?.dialogue||'No AI plan yet.'; $('aiReason').textContent=plan?.reason?('Why: '+plan.reason):''; $('aiReason').style.display=plan?.reason?'block':'none'; $('aiNext').textContent=d.ai_busy?'Thinking…':plan?('until '+fmt(plan.end)):(d.ai_waiting_for_plan?'Waiting':'—'); const planLeft=plan?Math.max(0,Math.round(plan.end-d.sim_minutes)):0; $('planRemaining').textContent=plan?(planLeft+' sim min remaining · plan '+(plan.parse_status||'valid')):(d.ai_busy?'MidnightBrain is choosing the next hour…':'No active plan');
+ $('actionConsoleCurrent').textContent=plan?.action_text||plan?.label||last?.action_text||last?.label||(d.ai_busy?'MidnightBrain принимает решение…':target.action)||'Ожидание решения Brain'; $('actionConsoleIntent').textContent=plan?.goal||plan?.brain_intention||last?.goal||last?.brain_intention||'—'; $('actionConsoleTarget').textContent=plan?.destination||plan?.target_location||last?.destination||last?.target_location||'—'; $('actionConsoleLocation').textContent=target.location||'—'; $('actionConsoleUntil').textContent=plan?fmt(plan.end):(d.ai_busy?'…':'—');
+ const hist=buildJournalCards(d.journal); setupJournalFilter(hist); const visibleHist=filteredJournal(hist); const feed=$('actionFeed'); if(feed)feed.innerHTML=(visibleHist.length?visibleHist:[{start:d.sim_minutes,end:d.sim_minutes,action:'wait',action_text:d.ai_busy?'MidnightBrain принимает решение…':'Ожидание решения AI',location:target.location,journal_status:d.ai_busy?'thinking':'waiting',character_name:'System'}]).map((h,i)=>{const start=fmt(h.start),end=fmt(h.end);const title=(h.character_name?h.character_name+' · ':'')+(h.action_text||h.action||'—');const route=(h.from_location&&h.location&&h.from_location!==h.location)?('📍 '+h.from_location+' → '+h.location):(h.location?('📍 '+h.location):'');const target=(h.destination&&h.destination!==h.location)?(' → '+h.destination):'';const intent=h.brain_intention?('AI: '+h.brain_intention):'';const reason=h.reason?(' · '+h.reason):'';const responseTime=Number.isFinite(Number(h.response_seconds))?(' · AI response: '+Number(h.response_seconds).toFixed(2)+' s'):'';const detail=[intent,route+target,responseTime,reason].filter(Boolean).join(' · ');const status=h.journal_status==='thinking'?'THINKING':h.journal_status==='waiting'?'WAITING':h.journal_status==='error'?'ERROR':h.journal_status==='planned'?'PLANNED':(i===0&&d.ai_busy?'NOW':'DONE');const interaction=isInteractionRow(h,hist);const who=String(h.character_name||'').toLowerCase();const cls=interaction?'interaction-row':who.includes('sonya')?'alice-row':who.includes('kirill')?'kirill-row':'';return '<div class="action-row '+cls+'"><time>'+escapeHtml(start)+'–'+escapeHtml(end)+'</time><div class="desc"><b>'+escapeHtml(title)+'</b>'+(detail?'<small>'+escapeHtml(detail)+'</small>':'')+'</div><span class="pill">'+status+'</span></div>';}).join('')||'<div class="action-row empty">Нет действий.</div>';
+ $('actionLive').innerHTML='<i></i> '+(d.ai_busy?'THINKING':'LIVE'); const selectedAi=!!d.ai_mode; [...document.querySelectorAll('#speeds button')].forEach(b=>b.classList.toggle('active',selectedAi?b.dataset.ai==='1':(+b.dataset.speed===+d.speed))); if($('play'))$('play').style.opacity=d.running?'0.7':'1'; if($('pause'))$('pause').style.opacity=d.running?'1':'0.7'; if(d.ai_error){$('aiError').textContent=d.ai_error;$('aiError').style.display='block'}else $('aiError').style.display='none';
+}
+let statePollTimer=null;
+let lastStateError='';
+let statePollBusy=false;
+async function getState(){
+ if(statePollBusy) return null;
+ statePollBusy=true;
+ try{
+   const r=await fetch('/api/state?ts='+Date.now(),{cache:'no-store'});
+   if(!r.ok) throw Error('State HTTP '+r.status);
+   const d=await r.json();
+   lastStateError='';
+   render(d);
+   return d;
+ }catch(e){
+   if(lastStateError!==e.message){
+     const feed=$('actionFeed');
+     if(feed) feed.innerHTML='<div class="action-row"><time>ERR</time><div class="desc"><b>Ошибка обновления интерфейса</b><small>'+escapeHtml(e.message)+'</small></div><span class="pill">ERROR</span></div>';
+   }
+   lastStateError=e.message;
+   const err=$('aiError'); if(err){err.textContent='State error: '+e.message;err.style.display='block';}
+   return null;
+ }finally{
+   statePollBusy=false;
+ }
+}
+function scheduleStatePoll(delay){
+ if(statePollTimer) clearTimeout(statePollTimer);
+ statePollTimer=setTimeout(async()=>{
+   const d=await getState();
+   // Paused: poll slowly so the UI stays responsive without hammering /api/state.
+   // Running: update frequently enough for the simulation clock and journal.
+   scheduleStatePoll(d && d.running ? 700 : 2500);
+ },delay);
+}
+async function post(path,payload={},opts={}){try{const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!r.ok)throw Error(await r.text());const data=await r.json().catch(()=>({}));if(opts.refresh!==false)await getState();return data}catch(e){const err=$('aiError');if(err){err.textContent=e.message;err.style.display='block'}return {ok:false,error:e.message}}}
+$('play').onclick=()=>post('/api/start');$('pause').onclick=()=>post('/api/pause');$('next').onclick=()=>post('/api/next');$('step').onclick=()=>post('/api/step');$('reset').onclick=()=>post('/api/reset');
+$('testAi').onclick=async()=>{try{await fetch('/api/test-ai'); setTimeout(getState,500)}catch(e){}};
+$('downloadLogs').onclick=async()=>{
+  const b=$('downloadLogs'); const old=b.textContent; b.disabled=true; b.textContent='⏳ Preparing logs…';
+  try{
+    const r=await fetch('/api/download-logs'); if(!r.ok)throw Error('Log export failed');
+    const blob=await r.blob(); const url=URL.createObjectURL(blob); const a=document.createElement('a');
+    a.href=url; a.download='MIDNIGHT_CITY_LOGS.zip'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    b.textContent='✓ Logs exported'; setTimeout(()=>b.textContent=old,1800);
+  }catch(e){ b.textContent='⚠ Export failed'; setTimeout(()=>b.textContent=old,1800); }
+  finally{b.disabled=false;}
+};
+function selectModeButton(b){
+  if(!b)return;
+  document.querySelectorAll('#speeds button').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  [...document.querySelectorAll('#speeds button')].forEach(x=>x.setAttribute('aria-pressed', x===b?'true':'false'));
+}
+$('speeds').onclick=e=>{
+  const b=e.target.closest('#speeds button');
+  if(!b)return;
+  selectModeButton(b);
+  if(b.dataset.ai==='1'){
+    $('speedText').textContent='AI';
+    $('aiModeLabel').textContent='Event-driven AI';
+    post('/api/speed',{mode:'ai'});
+  } else if(b.dataset.speed){
+    $('speedText').textContent=b.dataset.speed+'×';
+    $('aiModeLabel').textContent='Event-driven Brain';
+    post('/api/speed',{speed:+b.dataset.speed});
+  }
+};
+$('smartPenBtn')?.addEventListener('click',async()=>{
+ const input=$('smartPen'); const text=(input?.value||'').trim(); if(!text)return;
+ await post('/api/pen',{text,character_id:'sonya'}); if(input)input.value='';
+});
+$('smartPen')?.addEventListener('keydown',e=>{if(e.key==='Enter')$('smartPenBtn')?.click();});
+
+// Player mode: Kirill is directly controlled; all NPCs remain autonomous.
+let playerPos={x:16,y:25}; let interactionOpen=false; let dialogueOpen=false; let modalSession=false; let savedModalSpeed=null; let dialogueViewHistory=[]; let dialoguePollTimer=null;
+
+function rememberModalSpeed(){ if(!modalSession){ savedModalSpeed={ai:!!state.ai_mode,speed:Math.max(1,Math.min(16,Number(state.speed||1)))}; modalSession=true; } }
+function setTemporaryOneX(){ rememberModalSpeed(); selectModeButton(document.querySelector('#speeds button[data-speed="1"]')); $('speedText').textContent='1×'; $('aiModeLabel').textContent='Live simulation'; fetch('/api/speed',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({speed:1})}).catch(()=>{}); }
+function restoreModalSpeed(){ if(!modalSession)return; const saved=savedModalSpeed; modalSession=false; savedModalSpeed=null; if(saved?.ai){ selectModeButton(document.querySelector('#speeds button[data-ai="1"]')); $('speedText').textContent='AI'; $('aiModeLabel').textContent='Event-driven AI'; fetch('/api/speed',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'ai'})}).catch(()=>{}); } else { const v=saved?.speed||1; selectModeButton(document.querySelector('#speeds button[data-speed="'+v+'"]')||document.querySelector('#speeds button[data-speed="1"]')); $('speedText').textContent=v+'×'; $('aiModeLabel').textContent='Live simulation'; fetch('/api/speed',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({speed:v})}).catch(()=>{}); } }
+function showInteraction(){ if(interactionOpen)return; interactionOpen=true; setTemporaryOneX(); const ov=$('interactionOverlay'); if(ov)ov.style.display='flex'; const pr=$('proximity'); if(pr)pr.style.display='none'; }
+function hideInteraction(restore=true){ interactionOpen=false; const ov=$('interactionOverlay');if(ov)ov.style.display='none'; if(restore && !dialogueOpen)restoreModalSpeed(); }
+async function movePlayer(dx,dy){ if(interactionOpen||dialogueOpen)return; playerPos.x=Math.max(2,Math.min(98,playerPos.x+dx)); playerPos.y=Math.max(5,Math.min(94,playerPos.y+dy)); fetch('/api/player-move',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({x:playerPos.x,y:playerPos.y})}).catch(()=>{}); const pr=$('proximity'); if(pr)pr.style.display=playerDistance()<=12?'block':'none'; }
+document.addEventListener('keydown',e=>{ if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))return; if(interactionOpen||dialogueOpen){if(e.key==='Escape'){if(dialogueOpen)hideDialogue();else hideInteraction();}return;} const k=e.key.toLowerCase(); let dx=0,dy=0;if(k==='w'||e.key==='ArrowUp')dy=-2;if(k==='s'||e.key==='ArrowDown')dy=2;if(k==='a'||e.key==='ArrowLeft')dx=-2;if(k==='d'||e.key==='ArrowRight')dx=2;if(dx||dy){e.preventDefault();movePlayer(dx,dy);} });
+
+function renderDialogueHistory(history){const box=$('dialogueHistory');if(!box)return;box.innerHTML=(history||[]).slice(-20).map(m=>'<div style="margin:5px 0;padding:7px 9px;border-radius:9px;background:'+(m.speaker==='Kirill'?'#18152a':'#151b23')+';text-align:'+(m.speaker==='Kirill'?'right':'left')+'"><b style="font-size:9px;color:#9da8b7">'+escapeHtml(m.speaker)+'</b><div style="font-size:11px;margin-top:2px">'+escapeHtml(m.text)+'</div></div>').join('');box.scrollTop=box.scrollHeight;}
+function showDialogue(r){const ov=$('dialogueOverlay');if(!ov)return; dialogueOpen=true; dialogueTargetId=r?.target_id||selectedTargetId||'sonya'; setTemporaryOneX(); $('dialogueSpeaker').textContent=r?.speaker||r?.target_name||state.characters?.[dialogueTargetId]?.name||'Персонаж';$('dialogueTime').textContent=fmt(r?.sim_minutes??state?.sim_minutes??0);$('dialogueText').textContent=r?.dialogue||r?.message||'Персонаж печатает…';dialogueViewHistory=Array.isArray(r?.history)?r.history.slice(-20):(state?.dialogue_history||[]).slice(-20);renderDialogueHistory(dialogueViewHistory);ov.style.display='flex';setTimeout(()=>$('dialogueInput')?.focus(),0);if(r?.pending&&r?.job_id)pollDialogue(r.job_id);}
+function hideDialogue(){const ov=$('dialogueOverlay');if(ov)ov.style.display='none';dialogueOpen=false;if(dialoguePollTimer)clearTimeout(dialoguePollTimer);dialoguePollTimer=null;if(!interactionOpen)restoreModalSpeed();}
+async function pollDialogue(jobId){if(dialoguePollTimer)clearTimeout(dialoguePollTimer);try{const r=await fetch('/api/dialogue-status?job='+encodeURIComponent(jobId),{cache:'no-store'});const d=await r.json();if(d.status==='done'){dialogueViewHistory=d.history||dialogueViewHistory;renderDialogueHistory(dialogueViewHistory);$('dialogueText').textContent=d.reply||'';$('dialogueSpeaker').textContent=d.speaker||state.characters?.[dialogueTargetId]?.name||'Персонаж';$('dialogueTime').textContent=fmt(d.sim_minutes??state?.sim_minutes??0);dialoguePollTimer=null;return;}if(d.status==='error'){$('dialogueText').textContent='Не удалось получить ответ персонажа.';dialoguePollTimer=null;return;}}catch(e){}dialoguePollTimer=setTimeout(()=>pollDialogue(jobId),150);}
+async function sendDialogue(){const input=$('dialogueInput');const text=(input?.value||'').trim();if(!text)return;const btn=$('dialogueSend');if(btn)btn.disabled=true;const now=state?.sim_minutes??0;dialogueViewHistory.push({speaker:'Kirill',text,sim_minutes:now});renderDialogueHistory(dialogueViewHistory);$('dialogueText').textContent='Персонаж печатает…';if(input)input.value='';try{const r=await fetch('/api/player-dialogue',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_id:dialogueTargetId||selectedTargetId||'sonya',text})});const d=await r.json();if(d?.ok&&d.job_id)pollDialogue(d.job_id);else if(d?.error)$('dialogueText').textContent=d.error;}catch(e){$('dialogueText').textContent='Ошибка отправки.';}if(btn)btn.disabled=false;input?.focus();}
+$('dialogueClose').onclick=hideDialogue;$('dialogueOk').onclick=hideDialogue;$('dialogueSend').onclick=sendDialogue;$('dialogueInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();sendDialogue();}});
+$('interactionOverlay').addEventListener('click',async e=>{const b=e.target.closest('button[data-action]');if(!b)return;const action=b.dataset.action;if(action==='cancel'){hideInteraction(true);return;} b.disabled=true; const r=await post('/api/player-interaction',{target_id:selectedTargetId||'sonya',interaction:action},{refresh:false}); b.disabled=false; hideInteraction(false); if(r?.ok){if(r.dialogue_pending){showDialogue(r);}else{showDialogue(r);}} else {showDialogue({speaker:state.characters?.[selectedTargetId]?.name||'Персонаж',target_id:selectedTargetId,dialogue:'Сейчас я не могу.'});} });
+document.querySelectorAll('.ff button[data-ff]').forEach(b=>b.addEventListener('click',async()=>{b.disabled=true;await post('/api/fast-forward',{minutes:Number(b.dataset.ff)});b.disabled=false;}));
+// Initial button state is explicit, not dependent on the first API refresh.
+selectModeButton(document.querySelector('#speeds button[data-speed="1"]'));
+getState().then(d=>scheduleStatePoll(d && d.running ? 700 : 2500));
+})();
+</script>
+</body>
+</html>

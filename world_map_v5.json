@@ -1,0 +1,110 @@
+{
+  "map_id": "midnight_city_v5",
+  "image": "assets/midnight_city_map_v5.png",
+  "dimensions": {
+    "width": 1024,
+    "height": 568
+  },
+  "semantic_zones": [
+    {
+      "id": "home_north",
+      "type": "home",
+      "x": 16,
+      "y": 25,
+      "services": [
+        "sleep",
+        "eat",
+        "drink",
+        "shower",
+        "rest",
+        "study"
+      ]
+    },
+    {
+      "id": "college",
+      "type": "education",
+      "x": 40,
+      "y": 25,
+      "services": [
+        "attend_obligation",
+        "study"
+      ]
+    },
+    {
+      "id": "business",
+      "type": "work",
+      "x": 62,
+      "y": 25,
+      "services": [
+        "work"
+      ]
+    },
+    {
+      "id": "park",
+      "type": "recreation",
+      "x": 85,
+      "y": 26,
+      "services": [
+        "recreation",
+        "socialize",
+        "rest"
+      ]
+    },
+    {
+      "id": "home_south",
+      "type": "home",
+      "x": 16,
+      "y": 76,
+      "services": [
+        "sleep",
+        "eat",
+        "drink",
+        "shower",
+        "rest",
+        "study"
+      ]
+    },
+    {
+      "id": "business_south",
+      "type": "work",
+      "x": 41,
+      "y": 76,
+      "services": [
+        "work"
+      ]
+    },
+    {
+      "id": "shopping_food",
+      "type": "food",
+      "x": 62,
+      "y": 76,
+      "services": [
+        "eat",
+        "drink",
+        "shop",
+        "socialize"
+      ]
+    },
+    {
+      "id": "nightlife",
+      "type": "social",
+      "x": 85,
+      "y": 62,
+      "services": [
+        "socialize",
+        "recreation"
+      ]
+    },
+    {
+      "id": "health",
+      "type": "health",
+      "x": 86,
+      "y": 87,
+      "services": [
+        "rest"
+      ]
+    }
+  ],
+  "notes": "Map-v5 world definition. The LLM sees semantic types only; zone IDs and coordinates are external engine data. Multiple home/work zones allow nearest-zone selection without retraining.",
+  "version": "5.1"
+}

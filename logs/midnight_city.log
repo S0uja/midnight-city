@@ -1,0 +1,60 @@
+[2026-10-04 23:22:58] Starting Midnight City V29.16_ROMANTIC_PROGRESS_RELIABILITY
+[2026-10-04 23:22:58] HTTP server: READY at http://127.0.0.1:8080
+[2026-10-04 23:22:58] Brain preload: background load started
+[2026-10-04 23:22:58] Startup complete. Waiting for Play.
+[2026-10-04 23:22:58] Brain load: loading tokenizer...
+[2026-10-04 23:22:58] Brain load: tokenizer ready
+[2026-10-04 23:22:58] Brain load: loading 4-bit base model...
+[2026-10-04 23:23:05] Brain load: base model ready
+[2026-10-04 23:23:05] Brain load: loading LoRA adapter...
+[2026-10-04 23:23:06] Brain load: LoRA adapter ready
+[2026-10-04 23:23:06] Brain preload: READY
+[2026-10-04 23:33:52] Starting Midnight City V29.16_ROMANTIC_PROGRESS_RELIABILITY
+[2026-10-04 23:33:52] HTTP server: READY at http://127.0.0.1:8080
+[2026-10-04 23:33:52] Brain preload: background load started
+[2026-10-04 23:33:52] Startup complete. Waiting for Play.
+[2026-10-04 23:33:52] Brain load: loading tokenizer...
+[2026-10-04 23:33:53] Brain load: tokenizer ready
+[2026-10-04 23:33:53] Brain load: loading 4-bit base model...
+[2026-10-04 23:33:59] Brain load: base model ready
+[2026-10-04 23:33:59] Brain load: loading LoRA adapter...
+[2026-10-04 23:34:00] Brain load: LoRA adapter ready
+[2026-10-04 23:34:00] Brain preload: READY
+[2026-10-04 23:43:16] Starting Midnight City V29.16_ROMANTIC_PROGRESS_RELIABILITY
+[2026-10-04 23:43:16] HTTP server: READY at http://127.0.0.1:8080
+[2026-10-04 23:43:16] Brain preload: background load started
+[2026-10-04 23:43:16] Startup complete. Waiting for Play.
+[2026-10-04 23:43:16] Brain load: loading tokenizer...
+[2026-10-04 23:43:16] Brain load: tokenizer ready
+[2026-10-04 23:43:16] Brain load: loading 4-bit base model...
+[2026-10-04 23:43:24] Brain load: base model ready
+[2026-10-04 23:43:24] Brain load: loading LoRA adapter...
+[2026-10-04 23:43:24] Brain load: LoRA adapter ready
+[2026-10-04 23:43:24] Brain preload: READY
+[2026-10-05 12:08:09] Starting Midnight City V29.16_ROMANTIC_PROGRESS_RELIABILITY
+[2026-10-05 12:08:09] HTTP server failed: [Errno 98] Address already in use
+[2026-10-05 12:08:50] Brain load ERROR: transformers/torch/peft unavailable
+[2026-10-05 12:29:43] Brain load ERROR: transformers/torch/peft unavailable
+[2026-10-05 12:29:43] Brain load ERROR: transformers/torch/peft unavailable
+[2026-10-05 16:31:02] Starting Midnight City V31.3_PLAYER_DIALOGUE
+[2026-10-05 16:31:02] HTTP server: READY at http://127.0.0.1:8080
+[2026-10-05 16:31:02] Brain preload: background load started
+[2026-10-05 16:31:02] Startup complete. Waiting for Play.
+[2026-10-05 16:31:02] Brain load: loading tokenizer...
+[2026-10-05 16:31:02] Brain load: tokenizer ready
+[2026-10-05 16:31:02] Brain load: loading 4-bit base model...
+[2026-10-05 16:31:11] Brain load: base model ready
+[2026-10-05 16:31:11] Brain load: loading LoRA adapter...
+[2026-10-05 16:31:12] Brain load: LoRA adapter ready
+[2026-10-05 16:31:12] Brain preload: READY
+[2026-10-05 17:44:38] Starting Midnight City V32.2_MAP_EXPANSION
+[2026-10-05 17:44:38] HTTP server: READY at http://127.0.0.1:8080
+[2026-10-05 17:44:38] Brain preload: background load started
+[2026-10-05 17:44:38] Startup complete. Waiting for Play.
+[2026-10-05 17:44:38] Brain load: loading tokenizer...
+[2026-10-05 17:44:39] Brain load: tokenizer ready
+[2026-10-05 17:44:39] Brain load: loading 4-bit base model...
+[2026-10-05 17:44:47] Brain load: base model ready
+[2026-10-05 17:44:47] Brain load: loading LoRA adapter...
+[2026-10-05 17:44:47] Brain load: LoRA adapter ready
+[2026-10-05 17:44:47] Brain preload: READY
