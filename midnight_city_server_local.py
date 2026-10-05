@@ -198,7 +198,7 @@ def fresh_state():
   for _oid,_rel in c['relationships'].items(): _rel.setdefault('status','friend')
   c['social_history']=[]; c['conflict_cooldowns']={}; c['living_together']=False; c['romantic_history']={'dates':0,'flirts':0,'hugs':0,'kisses':0,'intimate_encounters':0,'last_romantic_time':None}; c['memory_items']=[{'text':m,'kind':'semantic','importance':0.8,'day':1,'time':'07:30'} for m in c.get('memory',[])]; c['memory_items']=c['memory_items'][-40:]
  now=7*60+30
- return {'sim_minutes':now,'day':1,'running':False,'speed':1,'ai_mode':False,'brain_busy':False,'brain_status':'ready','brain_error':None,'brain_request_seq':0,'brain_status_by_character':{cid:'ready' for cid in chars},'brain_generation':{cid:0 for cid in chars},'last_brain':None,'events':['Simulation ready at 07:30.'],'action_history':[],'journal':[],'characters':chars,'goals':{cid:None for cid in chars},'brain_persistent':True,'brain_online':False,'startup_ready':True,'world_epoch':0,'decision_epoch':0,'smart_reflection_day':{},'pen_influences':[],'next_intentions':{},'action_commit':{},'scheduled_events':[],'player_character_id':'kirill','player_mode':True,'player_position':{'x':16.0,'y':25.0},'dialogue_context':None,'dialogue_contexts':{},'dialogue_history':[],'selected_target_id':'sonya'}
+ return {'sim_minutes':now,'day':1,'running':False,'speed':1,'ai_mode':False,'brain_busy':False,'brain_status':'ready','brain_error':None,'brain_request_seq':0,'brain_status_by_character':{cid:'ready' for cid in chars},'brain_generation':{cid:0 for cid in chars},'last_brain':None,'events':['Simulation ready at 07:30.'],'action_history':[],'journal':[],'characters':chars,'goals':{cid:None for cid in chars},'brain_persistent':True,'brain_online':False,'startup_ready':True,'world_epoch':0,'decision_epoch':0,'smart_reflection_day':{},'pen_influences':[],'next_intentions':{},'action_commit':{},'scheduled_events':[],'player_character_id':'kirill','player_mode':True,'player_position':{'x':16.0,'y':25.0},'dialogue_context':None,'dialogue_contexts':{},'dialogue_history':[],'dialogue_histories':{},'selected_target_id':'sonya'}
 STATE=fresh_state()
 
 def world_snapshot():
@@ -1090,10 +1090,25 @@ def dialogue_fallback(c, o, text, now):
  if '?' in text: return 'Интересный вопрос. Я не хочу отвечать на него формально — дай мне подумать.'
  return 'Я понимаю. Расскажи мне чуть подробнее — мне интересно, что ты об этом думаешь.'
 
+def dialogue_history_for(oid, limit=40):
+ with LOCK:
+  histories=STATE.get('dialogue_histories',{})
+  if isinstance(histories,dict) and oid in histories:
+   return copy.deepcopy(histories.get(oid,[])[-limit:])
+  return copy.deepcopy([m for m in STATE.get('dialogue_history',[]) if m.get('target_id')==oid][-limit:])
+
+def append_dialogue_message(oid, message):
+ with LOCK:
+  item=copy.deepcopy(message)
+  item['target_id']=oid
+  STATE.setdefault('dialogue_history',[]).append(item)
+  STATE.setdefault('dialogue_histories',{}).setdefault(oid,[]).append(copy.deepcopy(item))
+  STATE['dialogue_histories'][oid]=STATE['dialogue_histories'][oid][-40:]
+
 def generate_dialogue_reply(cid, oid, text, now, dialogue_context=None):
  c=copy.deepcopy(STATE['characters'].get(cid,{})); o=copy.deepcopy(STATE['characters'].get(oid,{}))
  rel=(o.get('relationships') or {}).get(cid,{})
- recent=[m for m in STATE.get('dialogue_history',[]) if m.get('target_id')==oid][-12:]
+ recent=dialogue_history_for(oid,12)
  active_context=copy.deepcopy(dialogue_context if dialogue_context is not None else STATE.get('dialogue_contexts',{}).get(oid) or STATE.get('dialogue_context'))
  context={'clock':clock(now),'day':STATE.get('day',1),'character':o.get('name','NPC'),'location':o.get('location'),'action':o.get('action'),'mood':mood_label(o),'mood_value':o.get('mood'),'personality':personality_prompt(o),'needs':needs(o),'relationship_to_player':rel,'memory':(o.get('memory',[]) + [m.get('text','') if isinstance(m,dict) else str(m) for m in o.get('memory_items',[])])[-10:],'recent_dialogue':recent,'conversation_context':active_context,'player_message':text}
  system=f"""You are {o.get('name','an NPC')} in a life simulation. Reply as this adult character, with their own personality, memory, relationships, current activity and feelings.
@@ -1127,7 +1142,7 @@ def _new_dialogue_job(cid, oid, text, now):
  with DIALOGUE_LOCK:
   DIALOGUE_SEQ += 1
   job_id=f'dlg-{int(time.time()*1000)}-{DIALOGUE_SEQ}'
-  DIALOGUE_JOBS[job_id]={'status':'pending','character_id':cid,'target_id':oid,'text':text,'sim_minutes':now,'reply':None,'error':None,'context':copy.deepcopy(STATE.get('dialogue_context'))}
+  DIALOGUE_JOBS[job_id]={'status':'pending','character_id':cid,'target_id':oid,'text':text,'sim_minutes':now,'reply':None,'error':None,'context':copy.deepcopy(STATE.get('dialogue_contexts',{}).get(oid) or STATE.get('dialogue_context'))}
  return job_id
 
 def _run_dialogue_job(job_id):
@@ -1140,8 +1155,7 @@ def _run_dialogue_job(job_id):
   with LOCK:
    c=STATE['characters'].get(cid); o=STATE['characters'].get(oid)
    if not c or not o: raise RuntimeError('unknown_target')
-   history=STATE.setdefault('dialogue_history',[])
-   history.append({'speaker':o['name'],'text':reply,'sim_minutes':now})
+   append_dialogue_message(oid,{'speaker':o['name'],'text':reply,'sim_minutes':now})
    remember(cid,f'Поговорил с {o["name"]}: {text[:120]}','episodic',.45)
    remember(oid,f'{c["name"]} сказал: {text[:120]}','episodic',.45)
    log_event('dialogue_message',character_id=cid,character_name=c['name'],target_id=oid,target_name=o['name'],text=text,reply=reply,sim_minutes=now)
@@ -1165,7 +1179,7 @@ def dialogue_status(job_id):
  if not job: return {'ok':False,'status':'missing'}
  out={'ok':True,'status':job['status'],'job_id':str(job_id)}
  if job['status']=='done':
-  with LOCK: out['history']=copy.deepcopy(STATE.get('dialogue_history',[])[-20:])
+  with LOCK: out['history']=dialogue_history_for(job['target_id'],20)
   out.update({'reply':job.get('reply') or '','speaker':STATE['characters'].get(job['target_id'],{}).get('name','NPC'),'sim_minutes':job.get('sim_minutes',0)})
  elif job['status']=='error': out['error']=job.get('error') or 'dialogue error'
  return out
@@ -1256,10 +1270,10 @@ def player_interaction(payload):
     STATE['dialogue_context']=ctx
     STATE.setdefault('dialogue_contexts',{})[oid]=ctx
     STATE['selected_target_id']=oid
-    STATE.setdefault('dialogue_history',[]).append({'speaker':c['name'],'text':f'[{labels.get(it,engine_type)}]','sim_minutes':now,'context_type':engine_type,'target_id':oid})
+    append_dialogue_message(oid,{'speaker':c['name'],'text':f'[{labels.get(it,engine_type)}]','sim_minutes':now,'context_type':engine_type})
    prompt=f'Начни разговор в контексте действия: {ctx["description"]} Учитывай нашу историю, отношения, текущее место и то, чем ты занята. Не начинай с общего "я тебя слушаю".'
    job_id=start_dialogue_job(cid,oid,prompt,now)
-   return {'ok':True,'accepted':ok,'interaction':engine_type,'target_name':o['name'],'message':f'{o["name"]} готовит ответ…','dialogue_pending':True,'job_id':job_id,'speaker':o['name'],'sim_minutes':now,'dialogue_context':ctx,'target_id':oid,'dialogue_history':copy.deepcopy(STATE.get('dialogue_history',[])[-20:])}
+   return {'ok':True,'accepted':ok,'interaction':engine_type,'target_name':o['name'],'message':f'{o["name"]} готовит ответ…','dialogue_pending':True,'job_id':job_id,'speaker':o['name'],'sim_minutes':now,'dialogue_context':ctx,'target_id':oid,'dialogue_history':dialogue_history_for(oid,20)}
   dialogue=f'{o["name"]}: Не сейчас, ладно?'
   return {'ok':True,'accepted':ok,'interaction':engine_type,'target_name':o['name'],'message':f'{o["name"]}: сейчас не хочет','dialogue':dialogue,'speaker':o['name'],'sim_minutes':now}
 
@@ -1277,7 +1291,7 @@ def fast_forward(minutes):
 
 def snapshot():
  with LOCK:
-  d=copy.deepcopy(STATE); d['journal']=public_journal(); d['ai_mode']=bool(d['ai_mode']); d['ai_busy']=d['brain_busy']; d['ai_waiting_for_plan']=not any(d['goals'].values()) and not d['brain_busy']; d['ai_plan']=next((d['goals'].get(cid) for cid in d['characters'] if cid!=d.get('player_character_id','kirill') and d['goals'].get(cid)),None) or d.get('last_brain'); d['character_plans']=d['goals']; d['kirill']=d['characters']['kirill']; d['version']=VERSION; d['brain_model_path']=str(MODEL); d['brain_adapter_path']=str(ADAPTER); d['brain_error']=BRAIN_ERROR; d['brain_active_characters']=sorted(BRAIN_ACTIVE); d['brain_pending_characters']=sorted(BRAIN_PENDING); d['brain_generation']=copy.deepcopy(STATE.get('brain_generation',{})); d['next_intentions']=copy.deepcopy(STATE.get('next_intentions',{})); d['last_ai']=d.get('last_brain'); d['smart_profiles']={cid:smart_profile(cid) for cid in d['characters']}; d['interaction_options']={cid:[] for cid in d['characters']}; d['player_character_id']=STATE.get('player_character_id','kirill'); d['player_position']=copy.deepcopy(STATE.get('player_position',{'x':16,'y':25})); d['player_mode']=True; d['dialogue_history']=copy.deepcopy(STATE.get('dialogue_history',[])[-40:]); d['dialogue_context']=copy.deepcopy(STATE.get('dialogue_context')); d['dialogue_contexts']=copy.deepcopy(STATE.get('dialogue_contexts',{})); d['selected_target_id']=STATE.get('selected_target_id','sonya')
+  d=copy.deepcopy(STATE); d['journal']=public_journal(); d['ai_mode']=bool(d['ai_mode']); d['ai_busy']=d['brain_busy']; d['ai_waiting_for_plan']=not any(d['goals'].values()) and not d['brain_busy']; d['ai_plan']=next((d['goals'].get(cid) for cid in d['characters'] if cid!=d.get('player_character_id','kirill') and d['goals'].get(cid)),None) or d.get('last_brain'); d['character_plans']=d['goals']; d['kirill']=d['characters']['kirill']; d['version']=VERSION; d['brain_model_path']=str(MODEL); d['brain_adapter_path']=str(ADAPTER); d['brain_error']=BRAIN_ERROR; d['brain_active_characters']=sorted(BRAIN_ACTIVE); d['brain_pending_characters']=sorted(BRAIN_PENDING); d['brain_generation']=copy.deepcopy(STATE.get('brain_generation',{})); d['next_intentions']=copy.deepcopy(STATE.get('next_intentions',{})); d['last_ai']=d.get('last_brain'); d['smart_profiles']={cid:smart_profile(cid) for cid in d['characters']}; d['interaction_options']={cid:[] for cid in d['characters']}; d['player_character_id']=STATE.get('player_character_id','kirill'); d['player_position']=copy.deepcopy(STATE.get('player_position',{'x':16,'y':25})); d['player_mode']=True; d['dialogue_history']=dialogue_history_for(STATE.get('selected_target_id','sonya'),40); d['dialogue_histories']=copy.deepcopy(STATE.get('dialogue_histories',{})); d['dialogue_context']=copy.deepcopy(STATE.get('dialogue_context')); d['dialogue_contexts']=copy.deepcopy(STATE.get('dialogue_contexts',{})); d['selected_target_id']=STATE.get('selected_target_id','sonya')
   # Interaction options are calculated on demand when the player opens
   # an interaction menu. Do not recompute every possible interaction while
   # polling /api/state: this holds LOCK and can make player movement wait.
@@ -1439,7 +1453,7 @@ class Handler(BaseHTTPRequestHandler):
    with LOCK:
     c=STATE['characters'].get(cid); o=STATE['characters'].get(oid); now=STATE['sim_minutes']
     if not c or not o: return self.reply(200,{'ok':False,'reason':'unknown_target'})
-    STATE.setdefault('dialogue_history',[]).append({'speaker':c['name'],'text':text,'sim_minutes':now,'target_id':oid})
+    append_dialogue_message(oid,{'speaker':c['name'],'text':text,'sim_minutes':now})
    job_id=start_dialogue_job(cid,oid,text,now)
    return self.reply(200,{'ok':True,'pending':True,'job_id':job_id,'speaker':o['name'],'target_name':o['name'],'sim_minutes':now})
   if path=='/api/fast-forward':
