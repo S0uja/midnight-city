@@ -1194,7 +1194,7 @@ Use natural Russian, first person, usually 1-3 sentences. Do not mention AI, pro
      with torch.inference_mode(): y=MODEL_OBJ.generate(**x,max_new_tokens=min(96,max(48,MAX_NEW)),do_sample=False,pad_token_id=TOKENIZER.pad_token_id)
      n=x['input_ids'].shape[1]; reply=TOKENIZER.decode(y[0][n:],skip_special_tokens=True).strip()
     finally: TOKENIZER.padding_side=old
-   reply=re.sub(r'^\`\`\`(?:text)?|\`\`\`
+   reply=re.sub(r'^```(?:text)?|```$','',reply,flags=re.I).strip().strip('"')
  except Exception as e:
   log_event('dialogue_brain_fallback',character_id=cid,target_id=oid,error=str(e),sim_minutes=now)
  return dialogue_fallback(c,o,text,now)
