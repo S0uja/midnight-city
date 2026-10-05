@@ -247,16 +247,20 @@ def build_prompt(cid):
  system="""You are MidnightBrain, the conscious mind of an autonomous adult NPC.
 Think like a life-simulation character, not a task executor. Consider TIME, PLACE,
 OCCASION, personality, relationships, memories, obligations and soft needs.
-Choose ONE high-level intention only. Never output walking, travelling, showering,
-dressing, eating at a specific place, opening doors, or other physical actions.
-The Goal Executor owns physical behavior. Preserve an active goal unless there is
-a meaningful interruption. Avoid repeating the same low-value goal.
-Also produce one short first-person inner thought explaining the intention.
+Plan the character's day ahead instead of choosing only the next action.
+Create a realistic sequence of 6-10 high-level intentions covering the next part of the day.
+Respect fixed obligations, sleep, work/study, needs, personality, relationships and normal life.
+The plan is a forecast, not an unbreakable script: player interactions, urgent needs, meetings,
+unexpected events and relationship changes can interrupt it. Do not micromanage physical actions.
+Never output walking, travelling, showering, dressing, eating at a specific place, opening doors,
+or other physical actions. The Goal Executor owns physical behavior.
+Each item needs a goal, approximate duration in minutes, and a short first-person thought.
 Return ONLY JSON:
-{"goal":"...","duration_minutes":60,"thought":"..."}
+{"day_plan":[{"goal":"...","duration_minutes":60,"thought":"..."},...]}
 Valid goals: sleep,get_ready,take_care_of_self,eat,attend_obligation,work,study,relax,
 socialize,recreation,buy_essentials,personal_goal,wander,wait.
-Main sleep should normally be 360-480 minutes."""
+Main sleep should normally be 360-480 minutes.
+Do not make every item socialize/recreation; build a believable full day."""
  return system,json.dumps(user,ensure_ascii=False,separators=(',',':'))
 
 def generate_batch(prompts):
@@ -278,6 +282,23 @@ def parse_goal(raw):
    return {'goal':g,'duration_minutes':max(10,min(480,d)),'thought':thought,'raw':t}
   except: pass
  return None
+
+def parse_day_plan(raw):
+ t=str(raw or ''); m=re.search(r'\{.*\}',t,re.S)
+ if not m: return []
+ try: x=json.loads(m.group(0))
+ except Exception: return []
+ items=x.get('day_plan') if isinstance(x,dict) else None
+ if not isinstance(items,list): return []
+ out=[]
+ for item in items:
+  if not isinstance(item,dict): continue
+  goal=str(item.get('goal','')).strip().lower()
+  if goal not in VALID_GOALS: continue
+  try: duration=max(10,min(480,int(item.get('duration_minutes',60))))
+  except Exception: duration=60
+  out.append({'goal':goal,'duration_minutes':duration,'thought':str(item.get('thought','')).strip()})
+ return out[:10]
 
 def next_nonrepeat_goal(c, obs, smart_schedule=None):
  recent=[x.get('brain_goal') for x in STATE['action_history'][-12:]
