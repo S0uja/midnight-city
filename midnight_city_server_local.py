@@ -1,5 +1,5 @@
 from __future__ import annotations
-import json, os, re, threading, time, zipfile, io, webbrowser, copy
+import json, os, re, threading, time, zipfile, io, webbrowser, copy, importlib, sys
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 try:
@@ -21,6 +21,9 @@ from ai_constants import (
 from family_role_cheker import check_family_role_interaction
 
 ROOT=Path(__file__).resolve().parent; HTML=ROOT/'index.html'; MAP_FILE=ROOT/'world_map_v6.json'
+HOT_RELOAD_ACTIVE=globals().get('HOT_RELOAD_ACTIVE',False)
+HOT_RELOAD_MTIMES=globals().get('HOT_RELOAD_MTIMES',{})
+HTTP_SERVER=globals().get('HTTP_SERVER',None)
 MODEL=Path(os.environ.get('MIDNIGHT_BRAIN_MODEL',r'C:\AI\MidnightBrain_v2_MapAgnostic\models\Qwen3-4B-Nymphaea-RP'))
 ADAPTER=Path(os.environ.get('MIDNIGHT_BRAIN_ADAPTER',r'C:\AI\MidnightBrain_v2_MapAgnostic\output\MidnightBrain-v3\adapter'))
 VERSION='V32.2_MAP_EXPANSION'; MAX_NEW=int(os.environ.get('MIDNIGHT_BRAIN_MAX_NEW_TOKENS','48'))
@@ -1447,35 +1450,113 @@ class Handler(BaseHTTPRequestHandler):
   return self.reply(404,{'error':'not found'})
  def log_message(self,*args): pass
 
-def console_control_loop():
- """Development console controls.
+def _project_module_paths():
+ """Return loaded Python modules whose source lives in the project root."""
+ out={}
+ root=ROOT.resolve()
+ for name,module in list(sys.modules.items()):
+  if not module or name == '__main__':
+   continue
+  path=getattr(module,'__file__',None)
+  if not path or not str(path).endswith('.py'):
+   continue
+  try:
+   p=Path(path).resolve()
+  except Exception:
+   continue
+  try:
+   p.relative_to(root)
+  except ValueError:
+   continue
+  out[name]=p
+ return out
 
- Press R/r in the server console to restart the simulation state without
- stopping the HTTP server or unloading/reloading MidnightBrain's model.
+def capture_hot_reload_mtimes():
+ global HOT_RELOAD_MTIMES
+ HOT_RELOAD_MTIMES={name: p.stat().st_mtime_ns for name,p in _project_module_paths().items() if p.exists()}
+
+def hot_reload_code():
+ """Reload changed project .py files while keeping the loaded AI model/VRAM.
+
+ The main module is re-executed into the existing global namespace so the
+ HTTP handler and imported symbols point at the new code. The model, tokenizer
+ and PersistentBrainRuntime instance are restored afterwards.
  """
+ global HOT_RELOAD_ACTIVE,HOT_RELOAD_MTIMES,HTTP_SERVER,MODEL_OBJ,TOKENIZER,BRAIN,BRAIN_ERROR
+ old_model=MODEL_OBJ
+ old_tokenizer=TOKENIZER
+ old_brain=BRAIN
+ old_server=HTTP_SERVER
+ current=_project_module_paths()
+ changed=[name for name,path in current.items() if path.exists() and HOT_RELOAD_MTIMES.get(name)!=path.stat().st_mtime_ns]
+ main_path=Path(__file__).resolve()
+ if main_path.exists() and HOT_RELOAD_MTIMES.get('__main__')!=main_path.stat().st_mtime_ns:
+  changed.append('__main__')
+ if not changed:
+  log('Console R: no changed Python files detected.')
+  return
+ log('Console R: changed files: '+', '.join(changed))
+ with LOCK:
+  STATE['running']=False
+  BRAIN_EPOCH+=1
+  BRAIN_PENDING={}
+  BRAIN_ACTIVE=set()
+ try:
+  with BRAIN_LOCK:
+   importlib.invalidate_caches()
+   for name in changed:
+    if name == '__main__':
+     continue
+    module=sys.modules.get(name)
+    if module is not None:
+     importlib.reload(module)
+   HOT_RELOAD_ACTIVE=True
+   source=main_path.read_text(encoding='utf8')
+   exec(compile(source,str(main_path),'exec'),globals(),globals())
+ finally:
+  HOT_RELOAD_ACTIVE=False
+  MODEL_OBJ=old_model
+  TOKENIZER=old_tokenizer
+  BRAIN=old_brain
+  BRAIN_ERROR=None if old_model is not None else BRAIN_ERROR
+  HTTP_SERVER=old_server
+  BRAIN.on_rethink=on_brain_event
+  if HTTP_SERVER is not None:
+   HTTP_SERVER.RequestHandlerClass=Handler
+  capture_hot_reload_mtimes()
+ reset()
+ with LOCK:
+  STATE['running']=False
+  STATE['brain_status']='ready' if MODEL_OBJ is not None and BRAIN_ERROR is None else 'offline'
+  STATE['brain_online']=MODEL_OBJ is not None and BRAIN_ERROR is None
+ log('Console R: code reloaded. MidnightBrain model stayed in memory/VRAM.')
+
+def console_control_loop():
+ """Development console controls. Press R/r to hot-reload changed Python files."""
  while True:
   try:
    command=input().strip().lower()
   except (EOFError, KeyboardInterrupt):
    return
   if command == 'r':
-   log('Console R: restarting simulation state (AI model stays loaded)')
-   reset()
-   with LOCK:
-    STATE['running']=False
-    STATE['brain_status']='ready' if MODEL_OBJ is not None and BRAIN_ERROR is None else STATE.get('brain_status','offline')
-    STATE['brain_online']=MODEL_OBJ is not None and BRAIN_ERROR is None
-   log('Console R: simulation restarted. AI model was kept loaded.')
+   try:
+    hot_reload_code()
+   except Exception as e:
+    log(f'Console R: hot reload FAILED: {e!r}')
+    print(f'[Midnight City] Hot reload failed: {e}',flush=True)
   elif command:
-   log(f'Unknown console command: {command}. Use R to restart simulation.')
+   log(f'Unknown console command: {command}. Use R to hot-reload changed Python files.')
 
 def main():
+ global HTTP_SERVER
  log(f'Starting Midnight City {VERSION}')
  BRAIN.start(); BRAIN.observe(world_snapshot(),emit_events=False)
  threading.Thread(target=simulation_loop,daemon=True,name='SimulationLoop').start()
  try: s=ThreadingHTTPServer(('127.0.0.1',8080),Handler)
  except OSError as e: log(f'HTTP server failed: {e}'); print(f'[Midnight City] ERROR: port 8080 unavailable: {e}',flush=True); return
+ HTTP_SERVER=s
  threading.Thread(target=s.serve_forever,daemon=True,name='HTTPServer').start(); log('HTTP server: READY at http://127.0.0.1:8080')
+ capture_hot_reload_mtimes()
  try: webbrowser.open('http://127.0.0.1:8080',new=2)
  except Exception: pass
  threading.Thread(target=preload_brain,daemon=True,name='BrainPreload').start()
@@ -1484,4 +1565,4 @@ def main():
   threading.Thread(target=console_control_loop,daemon=True,name='ConsoleControl').start()
   while True: time.sleep(1)
  except KeyboardInterrupt: s.shutdown(); s.server_close()
-if __name__=='__main__': main()
+if __name__=='__main__' and not HOT_RELOAD_ACTIVE: main()
