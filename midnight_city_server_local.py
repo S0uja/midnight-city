@@ -1474,6 +1474,8 @@ def _project_module_paths():
 def capture_hot_reload_mtimes():
  global HOT_RELOAD_MTIMES
  HOT_RELOAD_MTIMES={name: p.stat().st_mtime_ns for name,p in _project_module_paths().items() if p.exists()}
+ try: HOT_RELOAD_MTIMES['__main__']=Path(__file__).resolve().stat().st_mtime_ns
+ except OSError: pass
 
 def hot_reload_code():
  """Reload changed project .py files while keeping the loaded AI model/VRAM.
@@ -1482,7 +1484,7 @@ def hot_reload_code():
  HTTP handler and imported symbols point at the new code. The model, tokenizer
  and PersistentBrainRuntime instance are restored afterwards.
  """
- global HOT_RELOAD_ACTIVE,HOT_RELOAD_MTIMES,HTTP_SERVER,MODEL_OBJ,TOKENIZER,BRAIN,BRAIN_ERROR
+ global HOT_RELOAD_ACTIVE,HOT_RELOAD_MTIMES,HTTP_SERVER,MODEL_OBJ,TOKENIZER,BRAIN,BRAIN_ERROR,BRAIN_EPOCH,BRAIN_PENDING,BRAIN_ACTIVE
  old_model=MODEL_OBJ
  old_tokenizer=TOKENIZER
  old_brain=BRAIN
