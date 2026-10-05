@@ -1256,7 +1256,7 @@ def player_interaction(payload):
     STATE.setdefault('dialogue_history',[]).append({'speaker':c['name'],'text':f'[{labels.get(it,engine_type)}]','sim_minutes':now,'context_type':engine_type,'target_id':oid})
    prompt=f'Начни разговор в контексте действия: {ctx["description"]} Учитывай нашу историю, отношения, текущее место и то, чем ты занята. Не начинай с общего "я тебя слушаю".'
    job_id=start_dialogue_job(cid,oid,prompt,now)
-   return {'ok':True,'accepted':ok,'interaction':engine_type,'target_name':o['name'],'message':f'{o["name"]} готовит ответ…','dialogue_pending':True,'job_id':job_id,'speaker':o['name'],'sim_minutes':now,'dialogue_context':ctx}
+   return {'ok':True,'accepted':ok,'interaction':engine_type,'target_name':o['name'],'message':f'{o["name"]} готовит ответ…','dialogue_pending':True,'job_id':job_id,'speaker':o['name'],'sim_minutes':now,'dialogue_context':ctx,'target_id':oid,'dialogue_history':copy.deepcopy(STATE.get('dialogue_history',[])[-20:])}
   dialogue=f'{o["name"]}: Не сейчас, ладно?'
   return {'ok':True,'accepted':ok,'interaction':engine_type,'target_name':o['name'],'message':f'{o["name"]}: сейчас не хочет','dialogue':dialogue,'speaker':o['name'],'sim_minutes':now}
 
